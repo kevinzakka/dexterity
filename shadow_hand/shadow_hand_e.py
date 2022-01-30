@@ -1,16 +1,44 @@
+from typing import List
+
+import numpy as np
 from dm_control import mjcf
+from typing_extensions import TypeAlias
 
 from shadow_hand import shadow_hand_e_constants as consts
+
+MjcfElement: TypeAlias = mjcf.element._ElementImpl
+
+
+_RECOLOR_GEOM_NAMES = [
+    "forearm",
+]
 
 
 class ShadowHandSeriesE:
     """Shadow Dexterous Hand E Series."""
 
-    def __init__(self, name: str = "shadow_hand_e") -> None:
-        self._mjcf_root = mjcf.from_path("./shadow_hand_series_e.xml")
-        self._mjcf_root.model = name
+    def __init__(
+        self,
+        name: str = "shadow_hand_e",
+        actuation: consts.Actuation = consts.Actuation.POSITION,
+    ) -> None:
+        """Initializes the hand.
 
-        self._add_actuators()
+        Args:
+            name: The name of the hand. Used as a prefix in the MJCF name attributes.
+            actuation: Instance of `shadow_hand_e_constants.Actuation` specifying which
+                actuation method to use.
+        """
+        self._mjcf_root = mjcf.from_path(str(consts.SHADOW_HAND_E_XML))
+
+        self._mjcf_root.model = name
+        self._actuation = actuation
+
+        self._add_mjcf_elements()
+        # self._add_actuators()
+        self._color_hand()
+
+    # Accessors.
 
     @property
     def mjcf_model(self) -> mjcf.RootElement:
@@ -21,16 +49,54 @@ class ShadowHandSeriesE:
         return self._mjcf_root.model
 
     @property
-    def joints(self):
-        pass
+    def joints(self) -> List[MjcfElement]:
+        """List of joint elements belonging to the hand."""
+        return self._joints
 
     @property
-    def actuators(self):
-        pass
+    def actuators(self) -> List[MjcfElement]:
+        """List of actuator elements belonging to the hand."""
+        ...
+
+    # Public methods.
+
+    # Private methods.
+
+    def _add_mjcf_elements(self) -> None:
+        self._joints = [self._mjcf_root.find("joint", j) for j in consts.JOINT_NAMES]
 
     def _add_actuators(self) -> None:
-        pass
+        """Adds actuators to the hand."""
+        if self._actuation not in consts.Actuation:
+            raise ValueError(f"Actuation {self._actuation} is not a valid actuation.")
 
+        if self._actuation == consts.Actuation.TORQUE:
+            self._add_torque_actuators()
+        elif self._actuation == consts.Actuation.POSITION:
+            self._add_position_actuators()
+
+    def _add_torque_actuators(self) -> None:
+        ...
+
+    def _add_position_actuators(self) -> None:
+        """Adds position actuators and default class attributes to the mjcf model."""
+        # Add default class attributes.
+
+        # Construct list of ctrlrange tuples from act limits and actuation mode.
+
+        # Construct list of forcerange tuples from effort limits.
+
+        def add_actuator(i: int) -> MjcfElement:
+            ...
+
+        self._actuators = [add_actuator(i) for i in range(consts.NUM_ACTUATORS)]
+
+    def _color_hand(self) -> None:
+        for geom_name in _RECOLOR_GEOM_NAMES:
+            geom = self._mjcf_root.find("geom", geom_name)
+            rgb = np.random.uniform(size=3).flatten()
+            rgba = np.append(rgb, 1)
+            geom.rgba = rgba
 
 
 if __name__ == "__main__":
@@ -39,9 +105,3 @@ if __name__ == "__main__":
     # Check we can step the physics.
     physics = mjcf.Physics.from_mjcf_model(hand.mjcf_model)
     physics.step()
-
-    # Render.
-    pixels = physics.render(height=480, width=640)
-    import matplotlib.pyplot as plt
-    plt.imshow(pixels)
-    plt.show()
