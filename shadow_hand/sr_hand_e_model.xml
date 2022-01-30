@@ -1,15 +1,169 @@
 <mujoco model="shadowhand_motor">
     <body name="forearm">
         <inertial pos="0 0 0.09" mass="3" diaginertia="0.0138 0.0138 0.00744" />
-        <include file="meshes/forearm.xml" />
+        <geom type="mesh" material="plastic" mesh="forearm_visual" class="visual" />
+        <geom type="mesh" material="plastic" mesh="forearm_collision" class="collision" />
+        <geom type="mesh" material="plastic" mesh="forearm_collision_wrist" class="collision" />
         <body name="wrist" pos="0 -0.01 0.213">
             <inertial pos="0 0 0.029" quat="0.5 0.5 0.5 0.5" mass="0.1" diaginertia="6.4e-05 4.38e-05 3.5e-05" />
             <joint name="WRJ2" axis="0 1 0" range="-0.523599 0.174533" damping="1.0" frictionloss="0.1"/>
-            <include file="meshes/wrist.xml" />
+            <geom type="mesh" material="metal" mesh="wrist_visual" class="visual" />
+            <geom type="mesh" material="metal" mesh="wrist_collision_1" class="collision" />
+            <geom type="mesh" material="metal" mesh="wrist_collision_2" class="collision" />
+            <geom type="mesh" material="metal" mesh="wrist_collision_3" class="collision" />
+            <geom type="mesh" material="metal" mesh="wrist_collision_4" class="collision" />
+            <geom type="mesh" material="metal" mesh="wrist_collision_5" class="collision" />
+            <geom type="mesh" material="metal" mesh="wrist_collision_6" class="collision" />
+            <geom type="mesh" material="metal" mesh="wrist_collision_7" class="collision" />
             <body name="palm" pos="0 0 0.034">
                 <inertial pos="0 0 0.035" quat="0.707107 0 0 0.707107" mass="0.3" diaginertia="0.0005287 0.0003581 0.000191" />
                 <joint name="WRJ1" axis="1 0 0" range="-0.698132 0.488692" damping="1.0" frictionloss="0.1"/>
-                <include file="meshes/palm.xml" />
+                <geom type="mesh" material="plastic" mesh="palm_visual" class="visual" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_0" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_1" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_2" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_3" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_4" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_5" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_6" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_7" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_8" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_9" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_10" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_11" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_12" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_13" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_14" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_15" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_16" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_17" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_18" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_19" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_20" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_21" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_22" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_23" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_24" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_25" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_26" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_27" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_28" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_29" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_30" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_31" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_32" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_33" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_34" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_35" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_36" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_37" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_38" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_39" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_40" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_41" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_42" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_43" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_44" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_45" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_46" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_47" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_48" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_49" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_50" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_51" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_52" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_53" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_54" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_55" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_56" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_57" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_58" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_59" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_60" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_61" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_62" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_63" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_64" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_65" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_66" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_67" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_68" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_69" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_70" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_71" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_72" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_73" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_74" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_75" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_76" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_77" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_78" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_79" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_80" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_81" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_82" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_83" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_84" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_85" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_86" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_87" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_88" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_89" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_90" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_91" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_92" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_93" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_94" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_95" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_96" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_97" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_98" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_99" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_100" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_101" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_102" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_103" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_104" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_105" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_106" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_107" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_108" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_109" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_110" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_111" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_112" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_113" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_114" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_115" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_116" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_117" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_118" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_119" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_120" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_121" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_122" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_123" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_124" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_125" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_126" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_127" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_128" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_129" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_130" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_131" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_132" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_133" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_134" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_135" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_136" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_137" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_138" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_139" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_140" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_141" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_142" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_143" class="collision" />
+                <geom type="mesh" material="plastic" mesh="palm_collision_144" class="collision" />
                 <body name="manipulator" pos="0 0 0.05">
                     <inertial pos="0 0 0.05" mass="0" diaginertia="0 0 0" />
                 </body>
@@ -19,19 +173,26 @@
                 <body name="ffknuckle" pos="0.033 0 0.095">
                     <inertial pos="0 0 0" quat="0.5 0.5 -0.5 0.5" mass="0.008" diaginertia="3.2e-07 2.6e-07 2.6e-07" />
                     <joint name="FFJ4" class="FJ4" axis="0 -1 0"/>
-                    <include file="meshes/duplicate_geoms/FF_knuckle.xml"/>
+                    <geom type="mesh" material="metal" mesh="knuckle_visual" class="visual" />
+                    <geom type="mesh" material="metal" mesh="knuckle_collision" class="collision" />
                     <body name="ffproximal">
                         <joint name="FFJ3" class="FJ3"/>
                         <inertial pos="0 0 0.0225" quat="0.707107 0 0 0.707107" mass="0.03" diaginertia="1e-05 9.8e-06 1.8e-06"/>
-                        <include file="meshes/duplicate_geoms/FF3.xml"/>
+                        <geom type="mesh" material="plastic" mesh="F3_visual" class="visual" />
+                        <geom type="mesh" material="plastic" mesh="F3_collision_proximal" class="collision" />
+                        <geom type="mesh" material="plastic" mesh="F3_collision_distal" class="collision" />
                         <body name="ffmiddle" pos="0 0 0.045">
                             <inertial pos="0 0 0.0125" quat="0.707107 0 0 0.707107" mass="0.017" diaginertia="2.7e-06 2.6e-06 8.7e-07"/>
                             <joint name="FFJ2" class="FJ2"/>
-                            <include file="meshes/duplicate_geoms/FF2.xml"/>
+                            <geom type="mesh" material="plastic" mesh="F2_visual" class="visual" />
+                            <geom type="mesh" material="plastic" mesh="F2_collision_proximal" class="collision" />
+                            <geom type="mesh" material="plastic" mesh="F2_collision_middle" class="collision" />
+                            <geom type="mesh" material="plastic" mesh="F2_collision_distal" class="collision" />
                             <body name="ffdistal" pos="0 0 0.025">
                                 <inertial pos="0 0 0.012" quat="0.707107 0 0 0.707107" mass="0.012" diaginertia="1.1e-06 9.4e-07 5.3e-07"/>
                                 <joint name="FFJ1" class="FJ1"/>
-                                <include file="meshes/duplicate_geoms/FF1.xml"/>
+                                <geom type="mesh" material="plastic" mesh="F1_visual" class="visual" />
+                                <geom type="mesh" material="plastic" mesh="F1_collision" class="collision" />
                                 <body name="fftip" pos="0 0 0.026">
                                     <inertial pos="0 0 0" mass="0.001" diaginertia="0 0 0"/>
                                 </body>
@@ -42,19 +203,26 @@
                 <body name="mfknuckle" pos="0.011 0 0.099">
                     <inertial pos="0 0 0" quat="0.5 0.5 -0.5 0.5" mass="0.008" diaginertia="3.2e-07 2.6e-07 2.6e-07" />
                     <joint name="MFJ4" class="FJ4" axis="0 -1 0"/>
-                    <include file="meshes/duplicate_geoms/MF_knuckle.xml"/>
+                    <geom type="mesh" material="metal" mesh="knuckle_visual" class="visual" />
+                    <geom type="mesh" material="metal" mesh="knuckle_collision" class="collision" />
                     <body name="mfproximal">
                         <joint name="MFJ3" class="FJ3"/>
                         <inertial pos="0 0 0.0225" quat="0.707107 0 0 0.707107" mass="0.03" diaginertia="1e-05 9.8e-06 1.8e-06"/>
-                        <include file="meshes/duplicate_geoms/MF3.xml"/>
+                        <geom type="mesh" material="plastic" mesh="F3_visual" class="visual" />
+                        <geom type="mesh" material="plastic" mesh="F3_collision_proximal" class="collision" />
+                        <geom type="mesh" material="plastic" mesh="F3_collision_distal" class="collision" />
                         <body name="mfmiddle" pos="0 0 0.045">
                             <inertial pos="0 0 0.0125" quat="0.707107 0 0 0.707107" mass="0.017" diaginertia="2.7e-06 2.6e-06 8.7e-07"/>
                             <joint name="MFJ2" class="FJ2"/>
-                            <include file="meshes/duplicate_geoms/MF2.xml"/>
+                            <geom type="mesh" material="plastic" mesh="F2_visual" class="visual" />
+                            <geom type="mesh" material="plastic" mesh="F2_collision_proximal" class="collision" />
+                            <geom type="mesh" material="plastic" mesh="F2_collision_middle" class="collision" />
+                            <geom type="mesh" material="plastic" mesh="F2_collision_distal" class="collision" />
                             <body name="mfdistal" pos="0 0 0.025">
                                 <inertial pos="0 0 0.012" quat="0.707107 0 0 0.707107" mass="0.012" diaginertia="1.1e-06 9.4e-07 5.3e-07"/>
                                 <joint name="MFJ1" class="FJ1"/>
-                                <include file="meshes/duplicate_geoms/MF1.xml"/>
+                                <geom type="mesh" material="plastic" mesh="F1_visual" class="visual" />
+                                <geom type="mesh" material="plastic" mesh="F1_collision" class="collision" />
                                 <body name="mftip" pos="0 0 0.026">
                                     <inertial pos="0 0 0" mass="0.001" diaginertia="0 0 0"/>
                                 </body>
@@ -65,19 +233,26 @@
                 <body name="rfknuckle" pos="-0.011 0 0.095">
                     <inertial pos="0 0 0" quat="0.5 0.5 -0.5 0.5" mass="0.008" diaginertia="3.2e-07 2.6e-07 2.6e-07" />
                     <joint name="RFJ4" class="FJ4" axis="0 1 0"/>
-                    <include file="meshes/duplicate_geoms/RF_knuckle.xml"/>
+                    <geom type="mesh" material="metal" mesh="knuckle_visual" class="visual" />
+                    <geom type="mesh" material="metal" mesh="knuckle_collision" class="collision" />
                     <body name="rfproximal">
                         <inertial pos="0 0 0.0225" quat="0.707107 0 0 0.707107" mass="0.03" diaginertia="1e-05 9.8e-06 1.8e-06"/>
                         <joint name="RFJ3" class="FJ3"/>
-                        <include file="meshes/duplicate_geoms/RF3.xml"/>
+                        <geom type="mesh" material="plastic" mesh="F3_visual" class="visual" />
+                        <geom type="mesh" material="plastic" mesh="F3_collision_proximal" class="collision" />
+                        <geom type="mesh" material="plastic" mesh="F3_collision_distal" class="collision" />
                         <body name="rfmiddle" pos="0 0 0.045">
                             <inertial pos="0 0 0.0125" quat="0.707107 0 0 0.707107" mass="0.017" diaginertia="2.7e-06 2.6e-06 8.7e-07"/>
                             <joint name="RFJ2" class="FJ2"/>
-                            <include file="meshes/duplicate_geoms/RF2.xml"/>
+                            <geom type="mesh" material="plastic" mesh="F2_visual" class="visual" />
+                            <geom type="mesh" material="plastic" mesh="F2_collision_proximal" class="collision" />
+                            <geom type="mesh" material="plastic" mesh="F2_collision_middle" class="collision" />
+                            <geom type="mesh" material="plastic" mesh="F2_collision_distal" class="collision" />
                             <body name="rfdistal" pos="0 0 0.025">
                                 <inertial pos="0 0 0.012" quat="0.707107 0 0 0.707107" mass="0.012" diaginertia="1.1e-06 9.4e-07 5.3e-07"/>
                                 <joint name="RFJ1" class="FJ1"/>
-                                <include file="meshes/duplicate_geoms/RF1.xml"/>
+                                <geom type="mesh" material="plastic" mesh="F1_visual" class="visual" />
+                                <geom type="mesh" material="plastic" mesh="F1_collision" class="collision" />
                                 <body name="rftip" pos="0 0 0.026">
                                     <inertial pos="0 0 0" mass="0.001" diaginertia="0 0 0"/>
                                 </body>
@@ -88,23 +263,46 @@
                 <body name="lfmetacarpal" pos="-0.033 0 0.02071">
                     <inertial pos="0 0 0.04" quat="0.707107 0 0 0.707107" mass="0.03" diaginertia="1.638e-05 1.45e-05 4.272e-06" />
                     <joint name="LFJ5" axis="0.573576 0 0.819152" range="0 0.785398"/>
-                    <include file="meshes/lfmetacarpal.xml" />
+                    <geom type="mesh" material="plastic" mesh="lfmetacarpal_visual" class="visual" />
+                    <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_0" class="collision" />
+                    <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_1" class="collision" />
+                    <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_2" class="collision" />
+                    <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_3" class="collision" />
+                    <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_4" class="collision" />
+                    <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_5" class="collision" />
+                    <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_6" class="collision" />
+                    <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_7" class="collision" />
+                    <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_8" class="collision" />
+                    <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_9" class="collision" />
+                    <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_10" class="collision" />
+                    <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_11" class="collision" />
+                    <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_12" class="collision" />
+                    <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_13" class="collision" />
+                    <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_14" class="collision" />
+                    <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_15" class="collision" />
                     <body name="lfknuckle" pos="0 0 0.06579">
                         <inertial pos="0 0 0" quat="0.5 0.5 -0.5 0.5" mass="0.008" diaginertia="3.2e-07 2.6e-07 2.6e-07" />
                         <joint name="LFJ4" class="FJ4" axis="0 1 0"/>
-                        <include file="meshes/duplicate_geoms/LF_knuckle.xml"/>
+                        <geom type="mesh" material="metal" mesh="knuckle_visual" class="visual" />
+                        <geom type="mesh" material="metal" mesh="knuckle_collision" class="collision" />
                         <body name="lfproximal">
                             <inertial pos="0 0 0.0225" quat="0.707107 0 0 0.707107" mass="0.03" diaginertia="1e-05 9.8e-06 1.8e-06"/>
                             <joint name="LFJ3" class="FJ3"/>
-                            <include file="meshes/duplicate_geoms/LF3.xml"/>
+                            <geom type="mesh" material="plastic" mesh="F3_visual" class="visual" />
+                            <geom type="mesh" material="plastic" mesh="F3_collision_proximal" class="collision" />
+                            <geom type="mesh" material="plastic" mesh="F3_collision_distal" class="collision" />
                             <body name="lfmiddle" pos="0 0 0.045">
                                 <inertial pos="0 0 0.0125" quat="0.707107 0 0 0.707107" mass="0.017" diaginertia="2.7e-06 2.6e-06 8.7e-07"/>
                                 <joint name="LFJ2" class="FJ2"/>
-                                <include file="meshes/duplicate_geoms/LF2.xml"/>
+                                <geom type="mesh" material="plastic" mesh="F2_visual" class="visual" />
+                                <geom type="mesh" material="plastic" mesh="F2_collision_proximal" class="collision" />
+                                <geom type="mesh" material="plastic" mesh="F2_collision_middle" class="collision" />
+                                <geom type="mesh" material="plastic" mesh="F2_collision_distal" class="collision" />
                                 <body name="lfdistal" pos="0 0 0.025">
                                     <inertial pos="0 0 0.012" quat="0.707107 0 0 0.707107" mass="0.012" diaginertia="1.1e-06 9.4e-07 5.3e-07"/>
                                     <joint name="LFJ1" class="FJ1"/>
-                                    <include file="meshes/duplicate_geoms/LF1.xml"/>
+                                    <geom type="mesh" material="plastic" mesh="F1_visual" class="visual" />
+                                    <geom type="mesh" material="plastic" mesh="F1_collision" class="collision" />
                                     <body name="lftip" pos="0 0 0.026">
                                         <inertial pos="0 0 0" mass="0.001" diaginertia="0 0 0"/>
                                     </body>
@@ -119,18 +317,24 @@
                     <body name="thproximal">
                         <inertial pos="0 0 0.019" mass="0.04" diaginertia="1.36e-05 1.36e-05 3.13e-06" />
                         <joint name="THJ4" axis="1 0 0" range="0 1.22173" class="THJ4"/>
-                        <include file="meshes/TH3.xml"/>
+                        <geom type="mesh" material="plastic" mesh="TH3_visual" class="visual" />
+                        <geom type="mesh" material="plastic" mesh="TH3_collision_proximal" class="collision" />
+                        <geom type="mesh" material="plastic" mesh="TH3_collision_distal" class="collision" />
                         <body name="thhub" pos="0 0 0.038">
                             <inertial pos="0 0 0" mass="0.005" diaginertia="1.0e-06 1.0e-06 3.0e-07" />
                             <joint name="THJ3" axis="1 0 0" range="-0.20944 0.20944" class="THJ3"/>
                             <body name="thmiddle">
                                 <inertial pos="0 0 0.016" mass="0.02" diaginertia="5.1e-06 5.1e-06 1.21e-06" />
                                 <joint name="THJ2" axis="0 -1 0" range="-0.698132 0.698132" class="THJ2"/>
-                                <include file="meshes/TH2.xml"/>
+                                <geom type="mesh" material="plastic" mesh="TH2_visual" class="visual" />
+                                <geom type="mesh" material="plastic" mesh="TH2_collision_proximal" class="collision" />
+                                <geom type="mesh" material="plastic" mesh="TH2_collision_middle" class="collision" />
+                                <geom type="mesh" material="plastic" mesh="TH2_collision_distal" class="collision" />
                                 <body name="thdistal" pos="0 0 0.032" quat="0.707107 0 0 -0.707107">
                                     <inertial pos="0 0 0.01375" quat="0.707107 0 0 0.707107" mass="0.016" diaginertia="2.2e-06 2.1e-06 1e-06" />
                                     <joint name="THJ1" axis="1 0 0" range="0 1.5708" class="THJ1"/>
-                                    <include file="meshes/TH1.xml"/>
+                                    <geom type="mesh" material="plastic" mesh="TH1_collision" class="collision"/>
+                                    <geom type="mesh" material="plastic" mesh="TH1_visual" class="visual"/>
                                     <body name="thtip" pos="0 0 0.0275">
                                         <inertial pos="0 0 0" mass="0.001" diaginertia="0 0 0" />
                                     </body>

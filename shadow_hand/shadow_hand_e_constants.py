@@ -17,6 +17,10 @@ from pathlib import Path
 _SRC_ROOT = Path(__file__).parent.parent / "shadow_hand"
 
 
+class Actuation(enum.Enum):
+    POSITION_CONTROL = enum.auto()
+
+
 class Parts(enum.Enum):
     WR = "wrist"
     FF = "first_finger"
@@ -122,3 +126,4 @@ ACTUATOR_GROUPS: Dict[Parts, Tuple[Actuators]] = {
 ACTUATOR_JOINT_MAP = {}
 ACTUATOR_CTRLRANGE = []
 JOINT_LIMITS = []
+
