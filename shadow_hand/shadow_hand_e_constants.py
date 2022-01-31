@@ -3,7 +3,7 @@
 import enum
 from math import radians as rad
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 
@@ -15,7 +15,7 @@ SHADOW_HAND_E_XML: Path = _SRC_ROOT / "shadow_hand_series_e.xml"
 
 
 class Components(enum.Enum):
-    """The structural components of the hand: wrist and fingers."""
+    """The actuated components of the hand: wrist and fingers."""
 
     WR = "wrist"
     FF = "first_finger"
@@ -93,8 +93,12 @@ JOINT_NAMES: List[str] = [j.name for j in Joints]
 class Actuation(enum.Enum):
     """Available actuation methods for the hand."""
 
-    TORQUE = enum.auto()
     POSITION = enum.auto()
+    """In position mode, the joint actuators receive a position and a position
+    controller is used to maintain the joint configuration.
+    """
+
+    TORQUE = enum.auto()
 
 
 class Actuators(enum.Enum):
@@ -312,7 +316,7 @@ VELOCITY_LIMITS: Dict[Actuators, Tuple[float, float]] = {
 }
 
 # Actuation limits of the hand.
-ACTUATION_LIMITS: Dict[Actuation, Any] = {
+ACTUATION_LIMITS: Dict[Actuation, Dict[Actuators, Tuple[float, float]]] = {
     Actuation.TORQUE: EFFORT_LIMITS,
     Actuation.POSITION: ACTUATOR_CTRLRANGE,
 }
@@ -336,6 +340,50 @@ def _compute_projection_matrices() -> Tuple[np.ndarray, np.ndarray]:
 # POSITION_TO_CONTROL maps a control vector to a joint vector.
 # CONTROL_TO_POSITION maps a joint vector to a control vector.
 POSITION_TO_CONTROL, CONTROL_TO_POSITION = _compute_projection_matrices()
+
+# ====================== #
+# Tendon constants
+# ====================== #
+
+
+class Tendons(enum.Enum):
+    """Tendons of the Shadow Hand.
+
+    These are used to model the underactuation of the *FJ0 and *FJ1 joints of the main
+    fingers. A tendon is defined for each *FJ0-*FJ1 pair, and an actuator is used to
+    drive it.
+    """
+
+    FFT1 = enum.auto()  # First finger.
+    MFT1 = enum.auto()  # Middle finger.
+    RFT1 = enum.auto()  # Ring finger.
+    LFT1 = enum.auto()  # Little finger.
+
+
+# Mapping from `Tendons` to `Joints` pair.
+TENDON_JOINT_MAPPING: Dict[Tendons, Tuple[Joints, Joints]] = {
+    Tendons.FFT1: (Joints.FFJ0, Joints.FFJ1),  # First finger.
+    Tendons.MFT1: (Joints.MFJ0, Joints.MFJ1),  # Middle finger.
+    Tendons.RFT1: (Joints.RFJ0, Joints.RFJ1),  # Ring finger.
+    Tendons.LFT1: (Joints.LFJ0, Joints.LFJ1),  # Little finger.
+}
+
+# Mapping from `Tendons` to the `Actuators` that drives it.
+TENDON_ACTUATOR_MAPPING: Dict[Tendons, Actuators] = {
+    Tendons.FFT1: Actuators.A_FFJ1,  # First finger.
+    Tendons.MFT1: Actuators.A_MFJ1,  # Middle finger.
+    Tendons.RFT1: Actuators.A_RFJ1,  # Ring finger.
+    Tendons.LFT1: Actuators.A_LFJ1,  # Little finger.
+}
+# Reverse mapping of `TENDON_ACTUATOR_MAPPING`.
+ACTUATOR_TENDON_MAPPING: Dict[Actuators, Tendons] = {
+    v: k for k, v in TENDON_ACTUATOR_MAPPING.items()
+}
+
+
+# ====================== #
+# Other constants
+# ====================== #
 
 
 # Names of the <geom> tags in the XML file whose color can be changed. This is useful

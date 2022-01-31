@@ -19,7 +19,7 @@
             executed. Used to simulate devices with limited communication bandwidth.
             Only affects the socket API and not the physics simulation.
      -->
-    <option timestep="0.008" impratio="1" iterations="20" apirate="200"/>
+    <option timestep="0.002" impratio="1" iterations="20" apirate="200"/>
 
     <!-- Need to tune this:
         njmax: max no. of scalar constraints
@@ -258,6 +258,7 @@
             range: The joint limits. By default (0, 0).
          -->
         <joint limited="true" damping="0.05" armature="0.005" margin="0.0" frictionloss="0.1"/>
+        <!-- Above values are taken from sr_common -->
 
         <default class="collision">
             <geom group="3"/>
@@ -293,6 +294,7 @@
         </default>
     </default>
 
+    <!-- Uncomment these lines if loading into the MuJoCo viewer. -->
     <!-- <include file="shadow_hand_position_actuators.xml"/> -->
     <!-- <include file="shadow_hand_torque_actuators.xml"/> -->
 
