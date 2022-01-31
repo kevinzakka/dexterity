@@ -11,6 +11,24 @@ MjcfElement: TypeAlias = mjcf.element._ElementImpl
 
 _RECOLOR_GEOM_NAMES = [
     "forearm",
+    "wrist",
+    "palm",
+    "ffproximal",
+    "ffmiddle",
+    "ffdistal",
+    "mfproximal",
+    "mfmiddle",
+    "mfdistal",
+    "rfproximal",
+    "rfmiddle",
+    "rfdistal",
+    "lfmetacarpal",
+    "lfproximal",
+    "lfmiddle",
+    "lfdistal",
+    "thproximal",
+    "thmiddle",
+    "thdistal",
 ]
 
 
@@ -21,6 +39,7 @@ class ShadowHandSeriesE:
         self,
         name: str = "shadow_hand_e",
         actuation: consts.Actuation = consts.Actuation.POSITION,
+        randomize_color: bool = False,
     ) -> None:
         """Initializes the hand.
 
@@ -28,15 +47,19 @@ class ShadowHandSeriesE:
             name: The name of the hand. Used as a prefix in the MJCF name attributes.
             actuation: Instance of `shadow_hand_e_constants.Actuation` specifying which
                 actuation method to use.
+            randomize_color: Whether to randomize the color of the hand.
         """
         self._mjcf_root = mjcf.from_path(str(consts.SHADOW_HAND_E_XML))
 
         self._mjcf_root.model = name
         self._actuation = actuation
+        self._randomize_color = randomize_color
 
         self._add_mjcf_elements()
-        # self._add_actuators()
-        self._color_hand()
+        self._add_actuators()
+
+        if self._randomize_color:
+            self._color_hand()
 
     # Accessors.
 
@@ -56,7 +79,7 @@ class ShadowHandSeriesE:
     @property
     def actuators(self) -> List[MjcfElement]:
         """List of actuator elements belonging to the hand."""
-        ...
+        return self._actuators
 
     # Public methods.
 
@@ -100,8 +123,17 @@ class ShadowHandSeriesE:
 
 
 if __name__ == "__main__":
-    hand = ShadowHandSeriesE()
+    hand = ShadowHandSeriesE(actuation=consts.Actuation.POSITION)
 
     # Check we can step the physics.
     physics = mjcf.Physics.from_mjcf_model(hand.mjcf_model)
     physics.step()
+
+    print("actuators: ", hand.actuators)
+
+    # Render.
+    # import matplotlib.pyplot as plt
+
+    # pixels = physics.render(width=640, height=480)
+    # plt.imshow(pixels)
+    # plt.show()
