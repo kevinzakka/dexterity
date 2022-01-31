@@ -1,51 +1,60 @@
 <mujoco model="shadow_hand">
     <compiler angle="radian"/>
 
-    <!-- The first two joints (0 and 1) of the first, middle, ring and little fingers
-        are underactuated, or "coupled".
-        We define a tendon for each J0-J1 pair and 1 actuator will drive each such
-        tendon. The length of the tendon is abstract, and its "length" will be the
-        combined angles of J0 and J1.
-     -->
+    <default class="act">
+        <general ctrllimited="true" forcelimited="false"/>
+    </default>
+
     <tendon>
-        <fixed name="FFT0">
-            <joint joint="FFJ1" coef="1"/>
+        <fixed name="FFT1">
             <joint joint="FFJ0" coef="1"/>
+            <joint joint="FFJ1" coef="1"/>
         </fixed>
-        <fixed name="MFT0">
-            <joint joint="MFJ1" coef="1"/>
+        <fixed name="MFT1">
             <joint joint="MFJ0" coef="1"/>
+            <joint joint="MFJ1" coef="1"/>
         </fixed>
-        <fixed name="RFT0">
-            <joint joint="RFJ1" coef="1"/>
+        <fixed name="RFT1">
             <joint joint="RFJ0" coef="1"/>
+            <joint joint="RFJ1" coef="1"/>
         </fixed>
-        <fixed name="LFT0">
-            <joint joint="LFJ1" coef="1"/>
+        <fixed name="LFT1">
             <joint joint="LFJ0" coef="1"/>
+            <joint joint="LFJ1" coef="1"/>
         </fixed>
     </tendon>
 
     <actuator>
-        <motor name="A_WRJ1" joint="WRJ1" ctrllimited="false" ctrlrange="-0.523599 0.174533"/>
-        <motor name="A_WRJ0" joint="WRJ0" ctrllimited="false" ctrlrange="-0.698132 0.488692"/>
-        <motor name="A_FFJ3" joint="FFJ3" ctrllimited="false" ctrlrange="-0.349066 0.349066"/>
-        <motor name="A_FFJ2" joint="FFJ2" ctrllimited="false" ctrlrange="0 1.5708"/>
-        <motor name="A_FFJ1" tendon="FFT0" ctrllimited="false" ctrlrange="0 3.1416"/>
-        <motor name="A_MFJ3" joint="MFJ3" ctrllimited="false" ctrlrange="-0.349066 0.349066"/>
-        <motor name="A_MFJ2" joint="MFJ2" ctrllimited="false" ctrlrange="0 1.5708"/>
-        <motor name="A_MFJ1" tendon="MFT0" ctrllimited="false" ctrlrange="0 3.1416"/>
-        <motor name="A_RFJ3" joint="RFJ3" ctrllimited="false" ctrlrange="-0.349066 0.349066"/>
-        <motor name="A_RFJ2" joint="RFJ2" ctrllimited="false" ctrlrange="0 1.5708"/>
-        <motor name="A_RFJ1" tendon="RFT0" ctrllimited="false" ctrlrange="0 3.1416"/>
-        <motor name="A_LFJ4" joint="LFJ4" ctrllimited="false" ctrlrange="0 0.785398"/>
-        <motor name="A_LFJ3" joint="LFJ3" ctrllimited="false" ctrlrange="-0.349066 0.349066"/>
-        <motor name="A_LFJ2" joint="LFJ2" ctrllimited="false" ctrlrange="0 1.5708"/>
-        <motor name="A_LFJ1" tendon="LFT0" ctrllimited="false" ctrlrange="0 3.1416"/>
-        <motor name="A_THJ4" joint="THJ4" ctrllimited="false" ctrlrange="-1.0472 1.0472"/>
-        <motor name="A_THJ3" joint="THJ3" ctrllimited="false" ctrlrange="0 1.22173"/>
-        <motor name="A_THJ2" joint="THJ2" ctrllimited="false" ctrlrange="-0.20944 0.20944"/>
-        <motor name="A_THJ1" joint="THJ1" ctrllimited="false" ctrlrange="-0.698132 0.698132"/>
-        <motor name="A_THJ0" joint="THJ0" ctrllimited="false" ctrlrange="0 1.5708"/>
+        <!-- Wrist. -->
+        <position name="A_WRJ1" joint="WRJ1" ctrlrange="-0.488692 0.139626" />
+        <position name="A_WRJ0" joint="WRJ0" ctrlrange="-0.698132 0.488692" />
+
+        <!-- First finger. -->
+        <position name="A_FFJ3" joint="FFJ3" ctrlrange="-0.3490658503988659 0.3490658503988659" />
+        <position name="A_FFJ2" joint="FFJ2" ctrlrange="0.0 1.5707963267948966" />
+        <position name="A_FFJ1" tendon="FFT1" ctrlrange="0.0 3.141592653589793" />
+
+        <!-- Middle finger. -->
+        <position name="A_MFJ3" joint="MFJ3" ctrlrange="-0.3490658503988659 0.3490658503988659" />
+        <position name="A_MFJ2" joint="MFJ2" ctrlrange="0.0 1.5707963267948966" />
+        <position name="A_MFJ1" tendon="MFT1" ctrlrange="0.0 3.141592653589793" />
+
+        <!-- Ring finger. -->
+        <position name="A_RFJ3" joint="RFJ3" ctrlrange="-0.3490658503988659 0.3490658503988659"  />
+        <position name="A_RFJ2" joint="RFJ2" ctrlrange="0.0 1.5707963267948966"  />
+        <position name="A_RFJ1" tendon="RFT1" ctrlrange="0.0 3.141592653589793" />
+
+        <!-- Little finger. -->
+        <position name="A_LFJ4" joint="LFJ4" ctrlrange="0.0 0.7853981633974483" />
+        <position name="A_LFJ3" joint="LFJ3" ctrlrange="-0.3490658503988659 0.3490658503988659" />
+        <position name="A_LFJ2" joint="LFJ2" ctrlrange="0.0 1.5707963267948966" />
+        <position name="A_LFJ1" tendon="LFT1" ctrlrange="0.0 3.141592653589793" />
+
+        <!-- Thumb. -->
+        <position name="A_THJ4" joint="THJ4" ctrlrange="-1.0471975511965976 1.0471975511965976" />
+        <position name="A_THJ3" joint="THJ3" ctrlrange="0.0 1.2217304763960306" />
+        <position name="A_THJ2" joint="THJ2" ctrlrange="-0.20943951023931956 0.20943951023931956" />
+        <position name="A_THJ1" joint="THJ1" ctrlrange="-0.5235987755982988 0.5235987755982988" />
+        <position name="A_THJ0" joint="THJ0" ctrlrange="0.0 1.5707963267948966" />
     </actuator>
 </mujoco>

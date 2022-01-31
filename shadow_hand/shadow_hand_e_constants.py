@@ -3,7 +3,7 @@
 import enum
 from math import radians as rad
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
@@ -34,9 +34,9 @@ class Joints(enum.Enum):
     """Joints of the Shadow Hand.
 
     There are a total of 24 joints:
-        - 2 joints for the wrist
-        - 4 joints for the first, middle and ring fingers
-        - 5 joints for the little finger and thumb
+        * 2 joints for the wrist
+        * 4 joints for the first, middle and ring fingers
+        * 5 joints for the little finger and thumb
 
     The joint numbering is increasing from fingertip to palm, i.e. FFJ0 is the first
     knuckle of the first finger, FFJ3 is the last knuckle of the first finger, etc.
@@ -134,7 +134,7 @@ NUM_ACTUATORS: int = len(Actuators)
 # A list of actuator names, as strings.
 ACTUATOR_NAMES: List[str] = [a.name for a in Actuators]
 
-# A mapping from `Component` to the list of `Actuator`s that belong to it.
+# A mapping from `Components` to the list of `Actuators` that belong to it.
 ACTUATOR_GROUP: Dict[Components, Tuple[Actuators, ...]] = {
     # Wrist has 2 actuators.
     Components.WR: (Actuators.A_WRJ1, Actuators.A_WRJ0),
@@ -169,7 +169,7 @@ ACTUATOR_GROUP: Dict[Components, Tuple[Actuators, ...]] = {
 #   [2]: Shadow Robot Company code: github.com/shadow-robot/sr_common
 #   [3]: OpenAI code: github.com/openai/robogym
 #
-# A mapping from `Actuator` to the corresponding control range, in radians.
+# A mapping from `Actuators` to the corresponding control range, in radians.
 ACTUATOR_CTRLRANGE: Dict[Actuators, Tuple[float, float]] = {
     # Wrist.
     Actuators.A_WRJ1: (rad(-28), rad(8)),
@@ -199,7 +199,7 @@ ACTUATOR_CTRLRANGE: Dict[Actuators, Tuple[float, float]] = {
     Actuators.A_THJ0: (rad(0), rad(90)),  # OpenAI uses (-90, 0) here. Why?
 }
 
-# One-to-many mapping from actuator to the joint(s) it controls.
+# One-to-many mapping from `Actuators` to the joint(s) it controls.
 # The first two joints of each of the main fingers are coupled, which means there is
 # only one actuator controlling them via a single tendon.
 ACTUATOR_JOINT_MAPPING: Dict[Actuators, Tuple[Joints, ...]] = {
@@ -237,7 +237,9 @@ JOINT_ACTUATOR_MAPPING: Dict[Joints, Actuators] = {
 }
 
 # Joint position limits, in radians.
-# The coupled joints share the full ctrlrange and so their range is split in half.
+# These are derived from `ACTUATOR_CTRLRANGE`, since we don't have a 1:1 mapping between
+# actuators and joints. Coupled joints share the full ctrlrange, so their range is split
+# in half.
 JOINT_LIMITS: Dict[Joints, Tuple[float, float]] = {}
 for actuator, ctrlrange in ACTUATOR_CTRLRANGE.items():
     joints = ACTUATOR_JOINT_MAPPING[actuator]
@@ -246,6 +248,74 @@ for actuator, ctrlrange in ACTUATOR_CTRLRANGE.items():
             ctrlrange[0] / len(joints),
             ctrlrange[1] / len(joints),
         )
+
+# Effort limits.
+# For a `hinge` (revolute) joint, this is equivalent to the torque limit, in N-m.
+# For a `slide` (prismatic) joint, this is equivalent to the force limit, in N.
+EFFORT_LIMITS: Dict[Actuators, Tuple[float, float]] = {
+    # Wrist.
+    Actuators.A_WRJ1: (-10.0, 10.0),
+    Actuators.A_WRJ0: (-30.0, 30.0),
+    # First finger.
+    Actuators.A_FFJ3: (-2.0, 2.0),
+    Actuators.A_FFJ2: (-2.0, 2.0),
+    Actuators.A_FFJ1: (-2.0, 2.0),
+    # Middle finger.
+    Actuators.A_MFJ3: (-2.0, 2.0),
+    Actuators.A_MFJ2: (-2.0, 2.0),
+    Actuators.A_MFJ1: (-2.0, 2.0),
+    # Ring finger.
+    Actuators.A_RFJ3: (-2.0, 2.0),
+    Actuators.A_RFJ2: (-2.0, 2.0),
+    Actuators.A_RFJ1: (-2.0, 2.0),
+    # Little finger.
+    Actuators.A_LFJ4: (-2.0, 2.0),
+    Actuators.A_LFJ3: (-2.0, 2.0),
+    Actuators.A_LFJ2: (-2.0, 2.0),
+    Actuators.A_LFJ1: (-2.0, 2.0),
+    # Thumb.
+    Actuators.A_THJ4: (-5.0, 5.0),
+    Actuators.A_THJ3: (-3.0, 3.0),
+    Actuators.A_THJ2: (-2.0, 2.0),
+    Actuators.A_THJ1: (-2.0, 2.0),
+    Actuators.A_THJ0: (-1.0, 1.0),
+}
+
+# Joint velocity limits, in rad/s.
+VELOCITY_LIMITS: Dict[Actuators, Tuple[float, float]] = {
+    # Wrist.
+    Actuators.A_WRJ1: (-2.0, 2.0),
+    Actuators.A_WRJ0: (-2.0, 2.0),
+    # First finger.
+    Actuators.A_FFJ3: (-2.0, 2.0),
+    Actuators.A_FFJ2: (-2.0, 2.0),
+    Actuators.A_FFJ1: (-2.0, 2.0),
+    # Middle finger.
+    Actuators.A_MFJ3: (-2.0, 2.0),
+    Actuators.A_MFJ2: (-2.0, 2.0),
+    Actuators.A_MFJ1: (-2.0, 2.0),
+    # Ring finger.
+    Actuators.A_RFJ3: (-2.0, 2.0),
+    Actuators.A_RFJ2: (-2.0, 2.0),
+    Actuators.A_RFJ1: (-2.0, 2.0),
+    # Little finger.
+    Actuators.A_LFJ4: (-2.0, 2.0),
+    Actuators.A_LFJ3: (-2.0, 2.0),
+    Actuators.A_LFJ2: (-2.0, 2.0),
+    Actuators.A_LFJ1: (-2.0, 2.0),
+    # Thumb.
+    Actuators.A_THJ4: (-4.0, 4.0),
+    Actuators.A_THJ3: (-4.0, 4.0),
+    Actuators.A_THJ2: (-4.0, 4.0),
+    Actuators.A_THJ1: (-2.0, 2.0),
+    Actuators.A_THJ0: (-4.0, 4.0),
+}
+
+# Actuation limits of the hand.
+ACTUATION_LIMITS: Dict[Actuation, Any] = {
+    Actuation.TORQUE: EFFORT_LIMITS,
+    Actuation.POSITION: JOINT_LIMITS,
+}
 
 
 def _compute_projection_matrices() -> Tuple[np.ndarray, np.ndarray]:
@@ -268,5 +338,31 @@ def _compute_projection_matrices() -> Tuple[np.ndarray, np.ndarray]:
 POSITION_TO_CONTROL, CONTROL_TO_POSITION = _compute_projection_matrices()
 
 
+# Names of the <geom> tags in the XML file whose color can be changed. This is useful
+# for dynamically changing the colors of the hand components.
+COLORED_GEOMS: Tuple[str, ...] = (
+    "forearm",
+    "wrist",
+    "palm",
+    "ffproximal",
+    "ffmiddle",
+    "ffdistal",
+    "mfproximal",
+    "mfmiddle",
+    "mfdistal",
+    "rfproximal",
+    "rfmiddle",
+    "rfdistal",
+    "lfmetacarpal",
+    "lfproximal",
+    "lfmiddle",
+    "lfdistal",
+    "thproximal",
+    "thmiddle",
+    "thdistal",
+)
+
+
 if __name__ == "__main__":
-    print(__doc__)
+    for k, v in ACTUATOR_CTRLRANGE.items():
+        print(f"{k} -> {v}")

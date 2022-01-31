@@ -9,29 +9,6 @@ from shadow_hand import shadow_hand_e_constants as consts
 MjcfElement: TypeAlias = mjcf.element._ElementImpl
 
 
-_RECOLOR_GEOM_NAMES = [
-    "forearm",
-    "wrist",
-    "palm",
-    "ffproximal",
-    "ffmiddle",
-    "ffdistal",
-    "mfproximal",
-    "mfmiddle",
-    "mfdistal",
-    "rfproximal",
-    "rfmiddle",
-    "rfdistal",
-    "lfmetacarpal",
-    "lfproximal",
-    "lfmiddle",
-    "lfdistal",
-    "thproximal",
-    "thmiddle",
-    "thdistal",
-]
-
-
 class ShadowHandSeriesE:
     """Shadow Dexterous Hand E Series."""
 
@@ -115,7 +92,7 @@ class ShadowHandSeriesE:
         self._actuators = [add_actuator(i) for i in range(consts.NUM_ACTUATORS)]
 
     def _color_hand(self) -> None:
-        for geom_name in _RECOLOR_GEOM_NAMES:
+        for geom_name in consts.COLORED_GEOMS:
             geom = self._mjcf_root.find("geom", geom_name)
             rgb = np.random.uniform(size=3).flatten()
             rgba = np.append(rgb, 1)
@@ -129,7 +106,7 @@ if __name__ == "__main__":
     physics = mjcf.Physics.from_mjcf_model(hand.mjcf_model)
     physics.step()
 
-    print("actuators: ", hand.actuators)
+    # print("actuators: ", hand.actuators)
 
     # Render.
     # import matplotlib.pyplot as plt
