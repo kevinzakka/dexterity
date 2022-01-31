@@ -1,10 +1,21 @@
 <mujoco model="shadow_hand">
     <compiler angle="radian"/>
 
-    <default class="act">
-        <general ctrllimited="true" forcelimited="false"/>
+    <!-- Default values for actuators are:
+        kp: 1
+        ctrllimited: false
+        forcelimited: false
+     -->
+    <default class="actuator">
+        <general ctrllimited="true" forcelimited="false" />
     </default>
 
+    <!-- Fixed tendon:
+        An abstract tendon whose length is defined as a linear combination of joint
+        positions.
+        With coeff=1 for both *FJ0 and *FJ1, the tendon's length is going to be their
+        sum.
+    -->
     <tendon>
         <fixed name="FFT1">
             <joint joint="FFJ0" coef="1"/>

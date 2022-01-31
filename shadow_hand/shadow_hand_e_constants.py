@@ -314,7 +314,7 @@ VELOCITY_LIMITS: Dict[Actuators, Tuple[float, float]] = {
 # Actuation limits of the hand.
 ACTUATION_LIMITS: Dict[Actuation, Any] = {
     Actuation.TORQUE: EFFORT_LIMITS,
-    Actuation.POSITION: JOINT_LIMITS,
+    Actuation.POSITION: ACTUATOR_CTRLRANGE,
 }
 
 

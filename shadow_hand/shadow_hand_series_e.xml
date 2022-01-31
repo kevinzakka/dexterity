@@ -293,7 +293,7 @@
         </default>
     </default>
 
-    <include file="shadow_hand_position_actuators.xml"/>
+    <!-- <include file="shadow_hand_position_actuators.xml"/> -->
     <!-- <include file="shadow_hand_torque_actuators.xml"/> -->
 
     <worldbody>

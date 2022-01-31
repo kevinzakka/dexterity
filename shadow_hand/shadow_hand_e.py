@@ -8,6 +8,16 @@ from shadow_hand import shadow_hand_e_constants as consts
 
 MjcfElement: TypeAlias = mjcf.element._ElementImpl
 
+_POSITION_DEFAULT_DCLASS = {
+    "actuator": {
+        "general": {
+            "ctrllimited": "true",
+            "forcelimited": "false",
+        },
+    },
+}
+
+
 
 class ShadowHandSeriesE:
     """Shadow Dexterous Hand E Series."""
@@ -81,13 +91,28 @@ class ShadowHandSeriesE:
     def _add_position_actuators(self) -> None:
         """Adds position actuators and default class attributes to the mjcf model."""
         # Add default class attributes.
+        for name, defaults in _POSITION_DEFAULT_DCLASS.items():
+            default_dclass = self._mjcf_root.default.add("default", dclass=name)
+            for tag, attributes in defaults.items():
+                element = getattr(default_dclass, tag)
+                for attr_name, attr_val in attributes.items():
+                    setattr(element, attr_name, attr_val)
 
         # Construct list of ctrlrange tuples from act limits and actuation mode.
+        ctrl_ranges = [r for r in consts.ACTUATION_LIMITS[self._actuation].values()]
 
         # Construct list of forcerange tuples from effort limits.
 
         def add_actuator(i: int) -> MjcfElement:
-            ...
+            actuator = self._sawyer_root.actuator.add(
+                "position",
+                name=f'j{i}',
+                ctrllimited=True,
+                forcelimited=True,
+                ctrlrange=ctrl_ranges[i],
+            )
+            # actuator.joint = self._joints[i]
+            return actuator
 
         self._actuators = [add_actuator(i) for i in range(consts.NUM_ACTUATORS)]
 
@@ -100,7 +125,7 @@ class ShadowHandSeriesE:
 
 
 if __name__ == "__main__":
-    hand = ShadowHandSeriesE(actuation=consts.Actuation.POSITION)
+    hand = ShadowHandSeriesE(actuation=consts.Actuation.POSITION, randomize_color=True)
 
     # Check we can step the physics.
     physics = mjcf.Physics.from_mjcf_model(hand.mjcf_model)
@@ -108,7 +133,7 @@ if __name__ == "__main__":
 
     # print("actuators: ", hand.actuators)
 
-    # Render.
+    # # Render.
     # import matplotlib.pyplot as plt
 
     # pixels = physics.render(width=640, height=480)
