@@ -269,9 +269,11 @@
         </default>
 
         <default class="finger">
-            <joint axis="1 0 0" range="0 1.5708"/>
+            <!-- <joint axis="1 0 0" range="0 1.5708"/> -->
+            <joint axis="1 0 0" range="0.000000 1.570796"/>
             <default class="FJ3">
-                <joint range="-0.349066 0.349066"/>
+                <!-- <joint range="-0.349066 0.349066"/> -->
+                <joint range="-0.349066 0.349066" />
             </default>
             <default class="FJ2">
                 <joint/>
@@ -306,7 +308,8 @@
             <geom type="mesh" material="plastic" mesh="forearm_collision_wrist" class="collision" />
             <body name="wrist" pos="0 -0.01 0.213">
                 <inertial pos="0 0 0.029" quat="0.5 0.5 0.5 0.5" mass="0.1" diaginertia="6.4e-05 4.38e-05 3.5e-05" />
-                <joint name="WRJ1" axis="0 1 0" range="-0.523599 0.174533" damping="1.0" frictionloss="0.1"/>
+                <!-- <joint name="WRJ1" axis="0 1 0" range="-0.523599 0.174533" damping="1.0" frictionloss="0.1"/> -->
+                <joint name="WRJ1" axis="0 1 0" range="-0.488692 0.139626" damping="1.0" frictionloss="0.1"/>
                 <geom name="wrist" type="mesh" material="metal" mesh="wrist_visual" class="visual" />
                 <geom type="mesh" material="metal" mesh="wrist_collision_1" class="collision" />
                 <geom type="mesh" material="metal" mesh="wrist_collision_2" class="collision" />
@@ -317,6 +320,7 @@
                 <geom type="mesh" material="metal" mesh="wrist_collision_7" class="collision" />
                 <body name="palm" pos="0 0 0.034">
                     <inertial pos="0 0 0.035" quat="0.707107 0 0 0.707107" mass="0.3" diaginertia="0.0005287 0.0003581 0.000191" />
+                    <!-- <joint name="WRJ0" axis="1 0 0" range="-0.698132 0.488692" damping="1.0" frictionloss="0.1"/> -->
                     <joint name="WRJ0" axis="1 0 0" range="-0.698132 0.488692" damping="1.0" frictionloss="0.1"/>
                     <geom name="palm" type="mesh" material="plastic" mesh="palm_visual" class="visual" />
                     <geom type="mesh" material="plastic" mesh="palm_collision_0" class="collision" />
@@ -464,12 +468,12 @@
                     <geom type="mesh" material="plastic" mesh="palm_collision_142" class="collision" />
                     <geom type="mesh" material="plastic" mesh="palm_collision_143" class="collision" />
                     <geom type="mesh" material="plastic" mesh="palm_collision_144" class="collision" />
-                    <body name="manipulator" pos="0 0 0.05">
+                    <!-- <body name="manipulator" pos="0 0 0.05">
                         <inertial pos="0 0 0.05" mass="0" diaginertia="0 0 0" />
-                    </body>
-                    <body name="imu" pos="0.01785 0.00765 0.049125" quat="2.31079e-07 -2.31079e-07 0.707107 0.707107">
+                    </body> -->
+                    <!-- <body name="imu" pos="0.01785 0.00765 0.049125" quat="2.31079e-07 -2.31079e-07 0.707107 0.707107">
                         <inertial pos="0.01785 0.00765 0.049125" quat="2.31079e-07 -2.31079e-07 0.707107 0.707107" mass="0" diaginertia="0 0 0" />
-                    </body>
+                    </body> -->
                     <body name="ffknuckle" pos="0.033 0 0.095">
                         <inertial pos="0 0 0" quat="0.5 0.5 -0.5 0.5" mass="0.008" diaginertia="3.2e-07 2.6e-07 2.6e-07" />
                         <joint name="FFJ3" class="FJ3" axis="0 -1 0"/>
@@ -562,7 +566,8 @@
                     </body>
                     <body name="lfmetacarpal" pos="-0.033 0 0.02071">
                         <inertial pos="0 0 0.04" quat="0.707107 0 0 0.707107" mass="0.03" diaginertia="1.638e-05 1.45e-05 4.272e-06" />
-                        <joint name="LFJ4" axis="0.573576 0 0.819152" range="0 0.785398"/>
+                        <!-- <joint name="LFJ4" axis="0.573576 0 0.819152" range="0 0.785398"/> -->
+                        <joint name="LFJ4" axis="0.573576 0 0.819152" range="0.000000 0.785398"/>
                         <geom name="lfmetacarpal" type="mesh" material="plastic" mesh="lfmetacarpal_visual" class="visual" />
                         <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_0" class="collision" />
                         <geom type="mesh" material="plastic" mesh="lfmetacarpal_collision_1" class="collision" />
@@ -613,26 +618,31 @@
                     </body>
                     <body name="thbase" pos="0.034 -0.0085 0.029" quat="0.92388 0 0.382683 0">
                         <inertial pos="0 0 0" mass="0.01" diaginertia="1.6e-07 1.6e-07 1.6e-07" />
-                        <joint name="THJ4" axis="0 0 -1" range="-1.0472 1.0472" class="THJ4"/>
+                        <!-- <joint name="THJ4" axis="0 0 -1" range="-1.0472 1.0472" class="THJ4"/> -->
+                        <joint name="THJ4" axis="0 0 -1" range="-1.047198 1.047198" class="THJ4"/>
                         <body name="thproximal">
                             <inertial pos="0 0 0.019" mass="0.04" diaginertia="1.36e-05 1.36e-05 3.13e-06" />
-                            <joint name="THJ3" axis="1 0 0" range="0 1.22173" class="THJ3"/>
+                            <!-- <joint name="THJ3" axis="1 0 0" range="0 1.22173" class="THJ3"/> -->
+                            <joint name="THJ3" axis="1 0 0" range="0.000000 1.221730" class="THJ3"/>
                             <geom name="thproximal" type="mesh" material="plastic" mesh="TH3_visual" class="visual" />
                             <geom type="mesh" material="plastic" mesh="TH3_collision_proximal" class="collision" />
                             <geom type="mesh" material="plastic" mesh="TH3_collision_distal" class="collision" />
                             <body name="thhub" pos="0 0 0.038">
                                 <inertial pos="0 0 0" mass="0.005" diaginertia="1.0e-06 1.0e-06 3.0e-07" />
-                                <joint name="THJ2" axis="1 0 0" range="-0.20944 0.20944" class="THJ2"/>
+                                <!-- <joint name="THJ2" axis="1 0 0" range="-0.20944 0.20944" class="THJ2"/> -->
+                                <joint name="THJ2" axis="1 0 0" range="-0.209440 0.209440" class="THJ2"/>
                                 <body name="thmiddle">
                                     <inertial pos="0 0 0.016" mass="0.02" diaginertia="5.1e-06 5.1e-06 1.21e-06" />
-                                    <joint name="THJ1" axis="0 -1 0" range="-0.698132 0.698132" class="THJ1"/>
+                                    <!-- <joint name="THJ1" axis="0 -1 0" range="-0.698132 0.698132" class="THJ1"/> -->
+                                    <joint name="THJ1" axis="0 -1 0" range="-0.523599 0.523599" class="THJ1"/>
                                     <geom name="thmiddle" type="mesh" material="plastic" mesh="TH2_visual" class="visual" />
                                     <geom type="mesh" material="plastic" mesh="TH2_collision_proximal" class="collision" />
                                     <geom type="mesh" material="plastic" mesh="TH2_collision_middle" class="collision" />
                                     <geom type="mesh" material="plastic" mesh="TH2_collision_distal" class="collision" />
                                     <body name="thdistal" pos="0 0 0.032" quat="0.707107 0 0 -0.707107">
                                         <inertial pos="0 0 0.01375" quat="0.707107 0 0 0.707107" mass="0.016" diaginertia="2.2e-06 2.1e-06 1e-06" />
-                                        <joint name="THJ0" axis="1 0 0" range="0 1.5708" class="THJ0"/>
+                                        <!-- <joint name="THJ0" axis="1 0 0" range="0 1.5708" class="THJ0"/> -->
+                                        <joint name="THJ0" axis="1 0 0" range="0.000000 1.570796" class="THJ0"/>
                                         <geom name="thdistal"  type="mesh" material="plastic" mesh="TH1_visual" class="visual"/>
                                         <geom type="mesh" material="plastic" mesh="TH1_collision" class="collision"/>
                                         <body name="thtip" pos="0 0 0.0275">

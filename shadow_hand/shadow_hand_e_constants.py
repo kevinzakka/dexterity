@@ -176,8 +176,8 @@ ACTUATOR_GROUP: Dict[Components, Tuple[Actuators, ...]] = {
 # A mapping from `Actuators` to the corresponding control range, in radians.
 ACTUATOR_CTRLRANGE: Dict[Actuators, Tuple[float, float]] = {
     # Wrist.
-    Actuators.A_WRJ1: (rad(-28), rad(8)),
-    Actuators.A_WRJ0: (rad(-40), rad(28)),
+    Actuators.A_WRJ1: (rad(-28), rad(8)),  # (-0.4886921905584123, 0.13962634015954636)
+    Actuators.A_WRJ0: (rad(-40), rad(28)),  # (-0.6981317007977318, 0.4886921905584123)
     # First finger.
     Actuators.A_FFJ3: (rad(-20), rad(20)),
     Actuators.A_FFJ2: (rad(0), rad(90)),

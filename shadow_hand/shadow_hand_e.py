@@ -117,7 +117,10 @@ class ShadowHandSeriesE:
 
         This method will evenly split the control command over the coupled joints.
         """
-        # TODO(kevin): Sanity check the control array.
+        if control.shape != (consts.NUM_ACTUATORS,):
+            raise ValueError(
+                f"Expected control of shape ({consts.NUM_ACTUATORS}), got {control.shape}"
+            )
         return consts.CONTROL_TO_POSITION @ control
 
     @classmethod
@@ -126,13 +129,44 @@ class ShadowHandSeriesE:
 
         This method will sum up the joint positions for the coupled joints.
         """
-        # TODO(kevin): Sanity check the joint position array.
+        if qpos.shape != (consts.NUM_JOINTS,):
+            raise ValueError(
+                f"Expected qpos of shape ({consts.NUM_JOINTS}), got {qpos.shape}"
+            )
         return consts.POSITION_TO_CONTROL @ qpos
 
     def set_position_control(self, physics: mjcf.Physics, control: np.ndarray) -> None:
-        # Is the control array valid?
+        """Sets the positions of the joints to the given control command.
+
+        Args:
+            physics: A `mujoco.Physics` instance.
+            control: The desired joint configuration of the hand.
+        """
+        # TODO(kevin): Do we want to clip instead?
+        if not self.is_position_control_valid(control):
+            raise ValueError("Position control command is invalid.")
+
         physics_joints = physics.bind(self._joints)
         physics_joints.qpos[:] = control
+
+    def is_position_control_valid(self, control: np.ndarray) -> bool:
+        """Returns True if the given joint positions are valid."""
+        shape_cond = control.shape == (consts.NUM_JOINTS,)
+        lower_bound = np.array([v[0] for v in consts.JOINT_LIMITS.values()])
+        upper_bound = np.array([v[1] for v in consts.JOINT_LIMITS.values()])
+        lower_bound_cond = np.all(control >= lower_bound - 1e-6)
+        upper_bound_cond = np.all(control <= upper_bound + 1e-6)
+        assert isinstance(lower_bound_cond, bool)
+        assert isinstance(upper_bound_cond, bool)
+        return shape_cond and lower_bound_cond and upper_bound_cond
+
+    @classmethod
+    def clip_position_control(cls, control: np.ndarray) -> np.ndarray:
+        ...
+
+    def get_actuator_control_bounds(self, physics: mjcf.Physics) -> np.ndarray:
+        ...
+        # return np.array(physics.bind(self._actuators).ctrlrange, copy=True)
 
     # Private methods.
 
@@ -182,10 +216,11 @@ class ShadowHandSeriesE:
                 name=act.name,
                 ctrllimited=True,
                 ctrlrange=consts.ACTUATION_LIMITS[self._actuation][act],
-                forcelimited=False,
-                # forcerange=None,
                 kp=params.kp,
                 **joint_or_tendon_kwarg,
+                # TODO(kevin): Should we set force limits?
+                # forcelimited=False,
+                # forcerange=None,
             )
             return actuator
 
@@ -215,16 +250,14 @@ if __name__ == "__main__":
     # f.write(hand.mjcf_model.to_xml_string())
 
     # qpos = hand.zero_joint_positions()
-    # qpos[0] += 1
-    # qpos = np.random.randn(consts.NUM_JOINTS)
+    # qpos[0] -= 0.1
+    # qpos[1] += 0.4
     # hand.set_position_control(physics, qpos)
     # physics.step()
 
-    # Render.
-    import matplotlib.pyplot as plt
+    # # Render.
+    # import matplotlib.pyplot as plt
 
-    pixels = physics.render(width=640, height=480)
-    plt.imshow(pixels)
-    plt.show()
-
-    # hand.set_position_control(hand.zero_control())
+    # pixels = physics.render(width=640, height=480)
+    # plt.imshow(pixels)
+    # plt.show()
