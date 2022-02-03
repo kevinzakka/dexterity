@@ -44,35 +44,35 @@
      -->
     <actuator>
         <!-- Wrist. -->
-        <position name="A_WRJ1" class="actuator" joint="WRJ1" ctrlrange="-0.488692 0.139626" kp="20" />
-        <position name="A_WRJ0" class="actuator" joint="WRJ0" ctrlrange="-0.698132 0.488692" kp="20" />
+        <position name="A_WRJ1" class="actuator" joint="WRJ1" ctrlrange="-0.488692 0.139626" forcerange="-10.0 10.0" kp="20" />
+        <position name="A_WRJ0" class="actuator" joint="WRJ0" ctrlrange="-0.698132 0.488692" forcerange="-30.0 30.0" kp="20" />
 
         <!-- First finger. -->
-        <position name="A_FFJ3" class="actuator" joint="FFJ3" ctrlrange="-0.3490658503988659 0.3490658503988659" kp="2" />
-        <position name="A_FFJ2" class="actuator" joint="FFJ2" ctrlrange="0.0 1.5707963267948966" kp="1" />
-        <position name="A_FFJ1" class="actuator" tendon="FFT1" ctrlrange="0.0 3.141592653589793" kp="1" />
+        <position name="A_FFJ3" class="actuator" joint="FFJ3" ctrlrange="-0.3490658503988659 0.3490658503988659" forcerange="-2.0 2.0" kp="2" />
+        <position name="A_FFJ2" class="actuator" joint="FFJ2" ctrlrange="0.0 1.5707963267948966" forcerange="-2.0 2.0" kp="1" />
+        <position name="A_FFJ1" class="actuator" tendon="FFT1" ctrlrange="0.0 3.141592653589793" forcerange="-2.0 2.0" kp="1" />
 
         <!-- Middle finger. -->
-        <position name="A_MFJ3" class="actuator" joint="MFJ3" ctrlrange="-0.3490658503988659 0.3490658503988659" kp="2" />
-        <position name="A_MFJ2" class="actuator" joint="MFJ2" ctrlrange="0.0 1.5707963267948966" kp="1" />
-        <position name="A_MFJ1" class="actuator" tendon="MFT1" ctrlrange="0.0 3.141592653589793" kp="1" />
+        <position name="A_MFJ3" class="actuator" joint="MFJ3" ctrlrange="-0.3490658503988659 0.3490658503988659" forcerange="-2.0 2.0" kp="2" />
+        <position name="A_MFJ2" class="actuator" joint="MFJ2" ctrlrange="0.0 1.5707963267948966" forcerange="-2.0 2.0" kp="1" />
+        <position name="A_MFJ1" class="actuator" tendon="MFT1" ctrlrange="0.0 3.141592653589793" forcerange="-2.0 2.0" kp="1" />
 
         <!-- Ring finger. -->
-        <position name="A_RFJ3" class="actuator" joint="RFJ3" ctrlrange="-0.3490658503988659 0.3490658503988659" kp="2" />
-        <position name="A_RFJ2" class="actuator" joint="RFJ2" ctrlrange="0.0 1.5707963267948966" kp="1"  />
-        <position name="A_RFJ1" class="actuator" tendon="RFT1" ctrlrange="0.0 3.141592653589793" kp="1" />
+        <position name="A_RFJ3" class="actuator" joint="RFJ3" ctrlrange="-0.3490658503988659 0.3490658503988659" forcerange="-2.0 2.0" kp="2" />
+        <position name="A_RFJ2" class="actuator" joint="RFJ2" ctrlrange="0.0 1.5707963267948966" forcerange="-2.0 2.0" kp="1"  />
+        <position name="A_RFJ1" class="actuator" tendon="RFT1" ctrlrange="0.0 3.141592653589793" forcerange="-2.0 2.0" kp="1" />
 
         <!-- Little finger. -->
-        <position name="A_LFJ4" class="actuator" joint="LFJ4" ctrlrange="0.0 0.7853981633974483" kp="1" />
-        <position name="A_LFJ3" class="actuator" joint="LFJ3" ctrlrange="-0.3490658503988659 0.3490658503988659" kp="2" />
-        <position name="A_LFJ2" class="actuator" joint="LFJ2" ctrlrange="0.0 1.5707963267948966" kp="1" />
-        <position name="A_LFJ1" class="actuator" tendon="LFT1" ctrlrange="0.0 3.141592653589793" kp="1" />
+        <position name="A_LFJ4" class="actuator" joint="LFJ4" ctrlrange="0.0 0.7853981633974483" forcerange="-2.0 2.0" kp="1" />
+        <position name="A_LFJ3" class="actuator" joint="LFJ3" ctrlrange="-0.3490658503988659 0.3490658503988659" forcerange="-2.0 2.0" kp="2" />
+        <position name="A_LFJ2" class="actuator" joint="LFJ2" ctrlrange="0.0 1.5707963267948966" forcerange="-2.0 2.0" kp="1" />
+        <position name="A_LFJ1" class="actuator" tendon="LFT1" ctrlrange="0.0 3.141592653589793" forcerange="-2.0 2.0" kp="1" />
 
         <!-- Thumb. -->
-        <position name="A_THJ4" class="actuator" joint="THJ4" ctrlrange="-1.0471975511965976 1.0471975511965976" kp="1" />
-        <position name="A_THJ3" class="actuator" joint="THJ3" ctrlrange="0.0 1.2217304763960306" kp="1" />
-        <position name="A_THJ2" class="actuator" joint="THJ2" ctrlrange="-0.20943951023931956 0.20943951023931956" kp="1" />
-        <position name="A_THJ1" class="actuator" joint="THJ1" ctrlrange="-0.5235987755982988 0.5235987755982988" kp="1" />
-        <position name="A_THJ0" class="actuator" joint="THJ0" ctrlrange="0.0 1.5707963267948966" kp="1" />
+        <position name="A_THJ4" class="actuator" joint="THJ4" ctrlrange="-1.0471975511965976 1.0471975511965976" forcerange="-2.0 2.0" kp="1" />
+        <position name="A_THJ3" class="actuator" joint="THJ3" ctrlrange="0.0 1.2217304763960306" forcerange="-2.0 2.0" kp="1" />
+        <position name="A_THJ2" class="actuator" joint="THJ2" ctrlrange="-0.20943951023931956 0.20943951023931956" forcerange="-2.0 2.0" kp="1" />
+        <position name="A_THJ1" class="actuator" joint="THJ1" ctrlrange="-0.5235987755982988 0.5235987755982988" forcerange="-2.0 2.0" kp="1" />
+        <position name="A_THJ0" class="actuator" joint="THJ0" ctrlrange="0.0 1.5707963267948966" forcerange="-2.0 2.0" kp="1" />
     </actuator>
 </mujoco>

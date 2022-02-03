@@ -6,14 +6,22 @@ from shadow_hand import shadow_hand_e
 from shadow_hand import shadow_hand_e_constants as consts
 
 
+class ShadowHandEConstantsTest(absltest.TestCase):
+    def test_projection_matrices(self) -> None:
+        # Matrix multiplication of these two matrices should be the identity.
+        actual = consts.POSITION_TO_CONTROL @ consts.CONTROL_TO_POSITION
+        expected = np.eye(consts.NUM_ACTUATORS)
+        np.testing.assert_array_equal(actual, expected)
+
+
 @parameterized.named_parameters(
     {
         "testcase_name": "position_control",
         "actuation": consts.Actuation.POSITION,
     },
 )
-class ShadowHandSeriesETest(absltest.TestCase):
-    def test_physics_step(self, actuation: consts.Actuation) -> None:
+class ShadowHandSeriesETest(parameterized.TestCase):
+    def test_can_compile_and_step_model(self, actuation: consts.Actuation) -> None:
         hand = shadow_hand_e.ShadowHandSeriesE(actuation=actuation)
         physics = mjcf.Physics.from_mjcf_model(hand.mjcf_model)
         physics.step()
@@ -34,20 +42,6 @@ class ShadowHandSeriesETest(absltest.TestCase):
     def test_mjcf_model(self, actuation: consts.Actuation) -> None:
         hand = shadow_hand_e.ShadowHandSeriesE(actuation=actuation)
         self.assertIsInstance(hand.mjcf_model, mjcf.RootElement)
-
-    def test_zero_joint_pos(self, actuation: consts.Actuation) -> None:
-        hand = shadow_hand_e.ShadowHandSeriesE(actuation=actuation)
-        np.testing.assert_array_equal(
-            hand.zero_joint_positions(),
-            np.zeros(consts.NUM_JOINTS),
-        )
-
-    def test_zero_control(self, actuation: consts.Actuation) -> None:
-        hand = shadow_hand_e.ShadowHandSeriesE(actuation=actuation)
-        np.testing.assert_array_equal(
-            hand.zero_control(),
-            np.zeros(consts.NUM_ACTUATORS),
-        )
 
     def test_control_to_joint_pos(self, actuation: consts.Actuation) -> None:
         hand = shadow_hand_e.ShadowHandSeriesE(actuation=actuation)

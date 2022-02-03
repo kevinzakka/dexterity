@@ -13,6 +13,8 @@ _SRC_ROOT: Path = Path(__file__).parent.parent / "shadow_hand"
 # Path to the shadow hand E series XML file.
 SHADOW_HAND_E_XML: Path = _SRC_ROOT / "shadow_hand_series_e.xml"
 
+EPSILON = 1e-6
+
 
 class Components(enum.Enum):
     """The actuated components of the hand: wrist and fingers."""
@@ -97,8 +99,6 @@ class Actuation(enum.Enum):
     """In position mode, the joint actuators receive a position and a position
     controller is used to maintain the joint configuration.
     """
-
-    TORQUE = enum.auto()
 
 
 class Actuators(enum.Enum):
@@ -241,9 +241,8 @@ JOINT_ACTUATOR_MAPPING: Dict[Joints, Actuators] = {
 }
 
 # Joint position limits, in radians.
-# These are derived from `ACTUATOR_CTRLRANGE`, since we don't have a 1:1 mapping between
-# actuators and joints. Coupled joints share the full ctrlrange, so their range is split
-# in half.
+# Coupled joints share the full ctrlrange, so their range is split in half.
+# Note: These values match the values reported in the spec sheet^[1], page 7.
 JOINT_LIMITS: Dict[Joints, Tuple[float, float]] = {}
 for actuator, ctrlrange in ACTUATOR_CTRLRANGE.items():
     joints = ACTUATOR_JOINT_MAPPING[actuator]
@@ -256,6 +255,7 @@ for actuator, ctrlrange in ACTUATOR_CTRLRANGE.items():
 # Effort limits.
 # For a `hinge` (revolute) joint, this is equivalent to the torque limit, in N-m.
 # For a `slide` (prismatic) joint, this is equivalent to the force limit, in N.
+# Taken from company's github repo^[2] by parsing the XACRO files.
 EFFORT_LIMITS: Dict[Actuators, Tuple[float, float]] = {
     # Wrist.
     Actuators.A_WRJ1: (-10.0, 10.0),
@@ -278,14 +278,16 @@ EFFORT_LIMITS: Dict[Actuators, Tuple[float, float]] = {
     Actuators.A_LFJ2: (-2.0, 2.0),
     Actuators.A_LFJ1: (-2.0, 2.0),
     # Thumb.
-    Actuators.A_THJ4: (-5.0, 5.0),
-    Actuators.A_THJ3: (-3.0, 3.0),
+    Actuators.A_THJ4: (-2.0, 2.0),
+    Actuators.A_THJ3: (-2.0, 2.0),
     Actuators.A_THJ2: (-2.0, 2.0),
     Actuators.A_THJ1: (-2.0, 2.0),
-    Actuators.A_THJ0: (-1.0, 1.0),
+    Actuators.A_THJ0: (-2.0, 2.0),
 }
 
 # Joint velocity limits, in rad/s.
+# Taken from company's github repo^[2] by parsing the XACRO files.
+# NOTE(kevin): It seems all the actuators have the same velocity limits.
 VELOCITY_LIMITS: Dict[Actuators, Tuple[float, float]] = {
     # Wrist.
     Actuators.A_WRJ1: (-2.0, 2.0),
@@ -308,16 +310,15 @@ VELOCITY_LIMITS: Dict[Actuators, Tuple[float, float]] = {
     Actuators.A_LFJ2: (-2.0, 2.0),
     Actuators.A_LFJ1: (-2.0, 2.0),
     # Thumb.
-    Actuators.A_THJ4: (-4.0, 4.0),
-    Actuators.A_THJ3: (-4.0, 4.0),
-    Actuators.A_THJ2: (-4.0, 4.0),
+    Actuators.A_THJ4: (-2.0, 2.0),
+    Actuators.A_THJ3: (-2.0, 2.0),
+    Actuators.A_THJ2: (-2.0, 2.0),
     Actuators.A_THJ1: (-2.0, 2.0),
-    Actuators.A_THJ0: (-4.0, 4.0),
+    Actuators.A_THJ0: (-2.0, 2.0),
 }
 
 # Actuation limits of the hand.
 ACTUATION_LIMITS: Dict[Actuation, Dict[Actuators, Tuple[float, float]]] = {
-    Actuation.TORQUE: EFFORT_LIMITS,
     Actuation.POSITION: ACTUATOR_CTRLRANGE,
 }
 
@@ -336,7 +337,8 @@ def _compute_projection_matrices() -> Tuple[np.ndarray, np.ndarray]:
     return position_to_control, control_to_position
 
 
-# Projection matrices for mapping control space to joint space and vice versa.
+# Projection matrices for mapping control space to joint space and vice versa. These
+# matrices should premultiply the vector to be projected.
 # POSITION_TO_CONTROL maps a control vector to a joint vector.
 # CONTROL_TO_POSITION maps a joint vector to a control vector.
 POSITION_TO_CONTROL, CONTROL_TO_POSITION = _compute_projection_matrices()
@@ -359,6 +361,12 @@ class Tendons(enum.Enum):
     RFT1 = enum.auto()  # Ring finger.
     LFT1 = enum.auto()  # Little finger.
 
+
+# The total number of tendons.
+NUM_TENDONS: int = len(Tendons)
+
+# A list of tendon names, as strings.
+TENDON_NAMES: List[str] = [t.name for t in Tendons]
 
 # Mapping from `Tendons` to `Joints` pair.
 TENDON_JOINT_MAPPING: Dict[Tendons, Tuple[Joints, Joints]] = {

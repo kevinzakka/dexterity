@@ -298,7 +298,6 @@
 
     <!-- Uncomment these lines if loading into the MuJoCo viewer. -->
     <!-- <include file="shadow_hand_position_actuators.xml"/> -->
-    <!-- <include file="shadow_hand_torque_actuators.xml"/> -->
 
     <worldbody>
         <body name="forearm">
@@ -656,6 +655,7 @@
                 </body>
             </body>
         </body>
+        <camera name="cam0" pos="0.0 -1 .6" xyaxes="1 0 0 0 1 2"/>
         <light ambient="0.2 0.2 0.2" castshadow="false" diffuse="0.8 0.8 0.8" dir="0 0 -1" directional="true" name="light0" pos="0 0 4" specular="0.3 0.3 0.3" />
     </worldbody>
 

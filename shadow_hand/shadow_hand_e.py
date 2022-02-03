@@ -81,7 +81,9 @@ class ShadowHandSeriesE:
         if self._randomize_color:
             self._color_hand()
 
+    # ================= #
     # Accessors.
+    # ================= #
 
     @property
     def mjcf_model(self) -> mjcf.RootElement:
@@ -101,7 +103,14 @@ class ShadowHandSeriesE:
         """List of actuator elements belonging to the hand."""
         return self._actuators
 
+    @property
+    def tendons(self) -> List[MjcfElement]:
+        """List of tendon elements belonging to the hand."""
+        return self._tendons
+
+    # ================= #
     # Public methods.
+    # ================= #
 
     @classmethod
     def zero_joint_positions(cls) -> np.ndarray:
@@ -113,9 +122,9 @@ class ShadowHandSeriesE:
 
     @classmethod
     def control_to_joint_positions(cls, control: np.ndarray) -> np.ndarray:
-        """Map a 20-D position control command to a 24-D joint position array.
+        """Maps a 20-D position control command to a 24-D joint position command.
 
-        This method will evenly split the control command over the coupled joints.
+        The control commands for the coupled joints are evenly split amongst them.
         """
         if control.shape != (consts.NUM_ACTUATORS,):
             raise ValueError(
@@ -125,9 +134,10 @@ class ShadowHandSeriesE:
 
     @classmethod
     def joint_positions_to_control(cls, qpos: np.ndarray) -> np.ndarray:
-        """Map a 24-D joint position array to a 20-D control command array.
+        """Maps a 24-D joint position command to a 20-D control command.
 
-        This method will sum up the joint positions for the coupled joints.
+        The position commands for the coupled joints are summed up to form the control
+        for their corresponding actuator.
         """
         if qpos.shape != (consts.NUM_JOINTS,):
             raise ValueError(
@@ -135,93 +145,122 @@ class ShadowHandSeriesE:
             )
         return consts.POSITION_TO_CONTROL @ qpos
 
+    def actuator_ctrl_range(self, physics: mjcf.Physics) -> np.ndarray:
+        """Returns lower and upper bounds on the actuator controls.
+
+        Args:
+            physics: An `mjcf.Physics` instance.
+
+        Returns:
+            A (20, 2) ndarray containing (lower, upper) control bounds.
+        """
+        # These are queried from the MJCF instead of the hard-coded constants. This is
+        # to account for any possible runtime randomizations.
+        return np.array(physics.bind(self._actuators).ctrlrange, copy=True)
+
+    def joint_limits(self, physics: mjcf.Physics) -> np.ndarray:
+        """Returns lower and upper bounds on the joint positions.
+
+        Args:
+            physics: An `mjcf.Physics` instance.
+
+        Returns:
+            A (24, 2) ndarray containing (lower, upper) position bounds.
+        """
+        # These are queried from the MJCF instead of the hard-coded constants. This is
+        # to account for any possible runtime randomizations.
+        return np.array(physics.bind(self._joints).range, copy=True)
+
     def set_position_control(self, physics: mjcf.Physics, control: np.ndarray) -> None:
         """Sets the positions of the joints to the given control command.
+
+        Each coordinate in the control vector is the desired joint angle, or sum of
+        joint angles for coupled joints.
 
         Args:
             physics: A `mujoco.Physics` instance.
             control: The desired joint configuration of the hand.
         """
-        # TODO(kevin): Do we want to clip instead?
-        if not self.is_position_control_valid(control):
+        # TODO(kevin): Should we clip instead?
+        if not self.is_position_control_valid(physics, control):
             raise ValueError("Position control command is invalid.")
 
-        physics_joints = physics.bind(self._joints)
-        physics_joints.qpos[:] = control
+        physics_actuators = physics.bind(self._actuators)
+        physics_actuators.ctrl[:] = control
 
-    def is_position_control_valid(self, control: np.ndarray) -> bool:
-        """Returns True if the given joint positions are valid."""
-        shape_cond = control.shape == (consts.NUM_JOINTS,)
-        lower_bound = np.array([v[0] for v in consts.JOINT_LIMITS.values()])
-        upper_bound = np.array([v[1] for v in consts.JOINT_LIMITS.values()])
-        lower_bound_cond = np.all(control >= lower_bound - 1e-6)
-        upper_bound_cond = np.all(control <= upper_bound + 1e-6)
-        assert isinstance(lower_bound_cond, bool)
-        assert isinstance(upper_bound_cond, bool)
-        return shape_cond and lower_bound_cond and upper_bound_cond
+    def is_position_control_valid(
+        self, physics: mjcf.Physics, control: np.ndarray
+    ) -> bool:
+        """Returns True if the given position control command is valid."""
+        ctrl_bounds = self.actuator_ctrl_range(physics)
+        shape_cond = control.shape == (consts.NUM_ACTUATORS,)
+        lower_cond = bool(np.all(control >= ctrl_bounds[:, 0] - consts.EPSILON))
+        upper_cond = bool(np.all(control <= ctrl_bounds[:, 1] + consts.EPSILON))
+        return shape_cond and lower_cond and upper_cond
 
-    @classmethod
-    def clip_position_control(cls, control: np.ndarray) -> np.ndarray:
-        ...
-
-    def get_actuator_control_bounds(self, physics: mjcf.Physics) -> np.ndarray:
-        ...
-        # return np.array(physics.bind(self._actuators).ctrlrange, copy=True)
-
+    # ================= #
     # Private methods.
+    # ================= #
 
     def _add_mjcf_elements(self) -> None:
-        self._joints = [self._mjcf_root.find("joint", j) for j in consts.JOINT_NAMES]
-
-        # TODO(kevin): Add sensors to XML file and parse them here.
+        # Parse joints.
+        self._joints = []
+        self._joint_elem_mapping = {}
+        for joint in consts.Joints:
+            joint_elem = self._mjcf_root.find("joint", joint.name)
+            self._joints.append(joint_elem)
+            self._joint_elem_mapping[joint] = joint_elem
 
     def _add_tendons(self) -> None:
         """Add tendons to the hand."""
         self._tendons = []
+        self._tendon_elem_mapping = {}
         for tendon, joints in consts.TENDON_JOINT_MAPPING.items():
             tendon_elem = self._mjcf_root.tendon.add("fixed", name=tendon.name)
             for joint in joints:
                 # We set `coef=1` to make the tendon's length equal to the sum of the
                 # joint positions.
                 tendon_elem.add("joint", joint=joint.name, coef=1.0)
-            self._tendons.append(tendon)
+            self._tendons.append(tendon_elem)
+            self._tendon_elem_mapping[tendon] = tendon_elem
 
     def _add_actuators(self) -> None:
         """Adds actuators to the hand."""
         if self._actuation not in consts.Actuation:
             raise ValueError(f"Actuation {self._actuation} is not a valid actuation.")
 
-        if self._actuation == consts.Actuation.TORQUE:
-            self._add_torque_actuators()
-        elif self._actuation == consts.Actuation.POSITION:
+        if self._actuation == consts.Actuation.POSITION:
             self._add_position_actuators()
 
     def _add_torque_actuators(self) -> None:
-        raise NotImplementedError
+        ...
 
     def _add_position_actuators(self) -> None:
         """Adds position actuators to the mjcf model."""
 
         def add_actuator(act: consts.Actuators, params: _ActuatorParams) -> MjcfElement:
-            if act in consts.ACTUATOR_TENDON_MAPPING:
-                joint_or_tendon_kwarg = {
-                    "tendon": consts.ACTUATOR_TENDON_MAPPING[act].name,
-                }
-            else:
-                joint_or_tendon_kwarg = {
-                    "joint": consts.ACTUATOR_JOINT_MAPPING[act][0].name,
-                }
+            # Create a position actuator MJCF elem.
             actuator = self._mjcf_root.actuator.add(
                 "position",
                 name=act.name,
                 ctrllimited=True,
                 ctrlrange=consts.ACTUATION_LIMITS[self._actuation][act],
+                forcelimited=True,
+                forcerange=consts.EFFORT_LIMITS[act],
                 kp=params.kp,
-                **joint_or_tendon_kwarg,
-                # TODO(kevin): Should we set force limits?
-                # forcelimited=False,
-                # forcerange=None,
             )
+
+            # NOTE(kevin): When specifying the joint or tendon to which an actuator is
+            # attached, the MJCF element itself is used, rather than the name string.
+            if act in consts.ACTUATOR_TENDON_MAPPING:
+                actuator.tendon = self._tendon_elem_mapping[
+                    consts.ACTUATOR_TENDON_MAPPING[act]
+                ]
+            else:
+                actuator.joint = self._joint_elem_mapping[
+                    consts.ACTUATOR_JOINT_MAPPING[act][0]
+                ]
+
             return actuator
 
         self._actuators = []
@@ -238,26 +277,14 @@ class ShadowHandSeriesE:
 
 
 if __name__ == "__main__":
-    hand = ShadowHandSeriesE(actuation=consts.Actuation.POSITION, randomize_color=True)
+    import matplotlib.pyplot as plt
 
-    # Check we can step the physics.
+    def render(physics, name=""):
+        pixels = physics.render(width=640, height=480, camera_id="cam0")
+        _ = plt.figure(name)
+        plt.imshow(pixels)
+        plt.show()
+
+    hand = ShadowHandSeriesE(actuation=consts.Actuation.POSITION)
     physics = mjcf.Physics.from_mjcf_model(hand.mjcf_model)
     physics.step()
-
-    # print(hand.mjcf_model.to_xml_string())
-
-    # with open("./mjcf_hand.xml", "w") as f:
-    # f.write(hand.mjcf_model.to_xml_string())
-
-    # qpos = hand.zero_joint_positions()
-    # qpos[0] -= 0.1
-    # qpos[1] += 0.4
-    # hand.set_position_control(physics, qpos)
-    # physics.step()
-
-    # # Render.
-    # import matplotlib.pyplot as plt
-
-    # pixels = physics.render(width=640, height=480)
-    # plt.imshow(pixels)
-    # plt.show()
