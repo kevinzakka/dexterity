@@ -22,6 +22,7 @@ class _ActuatorParams:
     """Position feedback gain for the MuJoCo actuator."""
 
 
+# TODO(kevin): Need to tune these.
 # NOTE(kevin): Some terminology:
 # little finger: metacarpal - knuckle - proximal - middle - distal
 # thumb: base - proximal - middle - distal
