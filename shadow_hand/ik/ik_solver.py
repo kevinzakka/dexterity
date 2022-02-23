@@ -11,6 +11,7 @@ from shadow_hand import controllers
 from shadow_hand.models.hands import shadow_hand_e_constants as consts
 from shadow_hand.utils import geometry_utils, mujoco_utils
 
+
 mjlib = mjbindings.mjlib
 
 # Gain for the linear and angular twist computation, these values should always
@@ -66,7 +67,9 @@ class IKSolver:
         self._geometry_physics = mujoco_physics.wrap(self._physics)
 
         # Wrist information.
-        wrist_joint_names = [j.name for j in consts.JOINT_GROUP[consts.Components.WR]]
+        wrist_joint_names = [
+            j.name for j in consts.JOINT_GROUP[consts.Components.WR]
+        ]
         self._wrist_controllable_joints = []
         for joint_name in wrist_joint_names:
             joint_elem = model.find(
@@ -75,7 +78,9 @@ class IKSolver:
             self._wrist_controllable_joints.append(joint_elem)
         assert len(self._wrist_controllable_joints) == len(wrist_joint_names)
         self._wrist_num_joints = len(wrist_joint_names)
-        self._wirst_joint_bindings = self._physics.bind(self._wrist_controllable_joints)
+        self._wirst_joint_bindings = self._physics.bind(
+            self._wrist_controllable_joints
+        )
         self._wrist_nullspace_joint_position_reference = np.zeros(
             self._wrist_num_joints
         )
@@ -115,7 +120,9 @@ class IKSolver:
         self._joint_bindings = {}
         self._num_joints = {}
         for finger, controllable_joints in self._controllable_joints.items():
-            self._joint_bindings[finger] = self._physics.bind(controllable_joints)
+            self._joint_bindings[finger] = self._physics.bind(
+                controllable_joints
+            )
             self._num_joints[finger] = len(controllable_joints)
         self._all_joints_binding = self._physics.bind(self._all_joints)
 
@@ -129,7 +136,9 @@ class IKSolver:
         obj_types = []
         obj_names = []
         for finger in self._fingers:
-            obj_types.append(mujoco_utils.get_element_type(self._elements[finger]))
+            obj_types.append(
+                mujoco_utils.get_element_type(self._elements[finger])
+            )
             obj_names.append(self._elements[finger].full_identifier)
         params = controllers.dls.DampedLeastSquaresParameters(
             model=self._physics.model,
@@ -209,7 +218,9 @@ class IKSolver:
         cur_poses = {}
         previous_poses = {}
         for finger, target_position in target_positions.items():
-            cur_frame = geometry.PoseStamped(pose=None, frame=self._elements[finger])
+            cur_frame = geometry.PoseStamped(
+                pose=None, frame=self._elements[finger]
+            )
             cur_pose = cur_frame.get_world_pose(self._geometry_physics)
             cur_frames[finger] = cur_frame
             cur_poses[finger] = cur_pose
@@ -245,8 +256,12 @@ class IKSolver:
 
             for finger, target_position in target_positions.items():
                 # Get the distance between the current pose and the target pose.
-                cur_pose = cur_frames[finger].get_world_pose(self._geometry_physics)
-                linear_err = float(np.linalg.norm(target_position - cur_pose.position))
+                cur_pose = cur_frames[finger].get_world_pose(
+                    self._geometry_physics
+                )
+                linear_err = float(
+                    np.linalg.norm(target_position - cur_pose.position)
+                )
                 avg_linear_err += linear_err
 
                 # Stop if the pose is close enough to the target pose.
@@ -326,5 +341,7 @@ def _compute_twist(
         from_quat=init_pose.quaternion,
     )
     linear = linear_velocity_gain * position_error / control_timestep_seconds
-    angular = angular_velocity_gain * orientation_error / control_timestep_seconds
+    angular = (
+        angular_velocity_gain * orientation_error / control_timestep_seconds
+    )
     return geometry.Twist(np.concatenate((linear, angular)))

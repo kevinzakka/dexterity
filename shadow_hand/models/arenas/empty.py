@@ -5,6 +5,7 @@ from dm_control import composer, mjcf
 
 from shadow_hand import _SRC_ROOT
 
+
 ARENA_XML_PATH: Path = _SRC_ROOT / "models" / "arenas" / "assets" / "arena.xml"
 
 

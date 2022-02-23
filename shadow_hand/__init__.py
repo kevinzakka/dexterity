@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 # Path to the root of the project.
 _PROJECT_ROOT: Path = Path(__file__).parent.parent
 

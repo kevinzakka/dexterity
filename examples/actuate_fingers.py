@@ -67,13 +67,17 @@ def main() -> None:
     time += duration_per
     for i in range(2):
         control[0] = consts.ACTUATOR_CTRLRANGE[consts.Actuators.A_WRJ1][0]
-        hand.set_position_control(physics, hand.joint_positions_to_control(control))
+        hand.set_position_control(
+            physics, hand.joint_positions_to_control(control)
+        )
         render(physics, frames, time, framerate)
         if i == 1:
             control[0] = 0.0
         else:
             control[0] = consts.ACTUATOR_CTRLRANGE[consts.Actuators.A_WRJ1][1]
-        hand.set_position_control(physics, hand.joint_positions_to_control(control))
+        hand.set_position_control(
+            physics, hand.joint_positions_to_control(control)
+        )
         render(physics, frames, time + duration_per, framerate)
         time += 2 * duration_per
 

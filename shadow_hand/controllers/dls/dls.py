@@ -8,6 +8,7 @@ from shadow_hand import hints
 from shadow_hand.controllers import mapper
 from shadow_hand.utils import mujoco_utils
 
+
 mjlib = mjbindings.mjlib
 enums = mjbindings.enums
 
@@ -71,5 +72,7 @@ class DampedLeastSquaresMapper(mapper.CartesianVelocitytoJointVelocityMapper):
 
         # Solve!
         hess_approx = jacobian.T @ jacobian
-        hess_approx += np.eye(hess_approx.shape[0]) * self.params.regularization_weight
+        hess_approx += (
+            np.eye(hess_approx.shape[0]) * self.params.regularization_weight
+        )
         return np.linalg.solve(hess_approx, jacobian.T @ twist)

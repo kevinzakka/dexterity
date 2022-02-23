@@ -65,7 +65,9 @@ def _build_arena(name: str, disable_gravity: bool = False) -> Arena:
 
 
 def _add_hand(arena: Arena):
-    axis_angle = np.radians(180) * np.array([0, np.sqrt(2) / 2, -np.sqrt(2) / 2])
+    axis_angle = np.radians(180) * np.array(
+        [0, np.sqrt(2) / 2, -np.sqrt(2) / 2]
+    )
     quat = tr.axisangle_to_quat(axis_angle)
     attachment_site = arena.mjcf_model.worldbody.add(
         "site",
@@ -127,7 +129,9 @@ def main(args: Args) -> None:
         target_positions = {}
         for finger, fingertip_site in hand._fingertip_site_elem_mapping.items():
             if finger in fingers:
-                target_positions[finger] = physics.bind(fingertip_site).xpos.copy()
+                target_positions[finger] = physics.bind(
+                    fingertip_site
+                ).xpos.copy()
         assert set(tuple(target_positions.keys())) == set(fingers)
         im_desired = render_scene(physics, transparent=False)
 

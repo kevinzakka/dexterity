@@ -9,6 +9,7 @@ from dm_control.mujoco.wrapper import mjbindings
 
 from shadow_hand import hints
 
+
 mjlib = mjbindings.mjlib
 enums = mjbindings.enums
 
@@ -67,13 +68,15 @@ class Parameters:
                 enums.mjtObj.mjOBJ_SITE,
             ]:
                 raise ValueError(
-                    f"Objects of type {object_type} are not supported. Only bodies, "
-                    "geoms and sites are supported."
+                    f"Objects of type {object_type} are not supported. Only"
+                    " bodies, geoms and sites are supported."
                 )
 
-        for object_name, object_type in zip(self.object_names, self.object_types):
+        for object_name, object_type in zip(
+            self.object_names, self.object_types
+        ):
             if self.model.name2id(object_name, object_type) < 0:
                 raise ValueError(
-                    f"Could not find MuJoCo object with name {object_name} and type "
-                    f"{object_type} in the provided model."
+                    f"Could not find MuJoCo object with name {object_name} and"
+                    f" type {object_type} in the provided model."
                 )

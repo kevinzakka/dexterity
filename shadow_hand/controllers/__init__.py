@@ -4,6 +4,7 @@ from shadow_hand.controllers.mapper import (
     Parameters,
 )
 
+
 __all__ = [
     "CartesianVelocitytoJointVelocityMapper",
     "Parameters",

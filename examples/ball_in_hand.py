@@ -66,7 +66,9 @@ def _build_arena(name: str, disable_gravity: bool = False) -> Arena:
 
 
 def _add_hand(arena: Arena) -> shadow_hand_e.ShadowHandSeriesE:
-    axis_angle = np.radians(180) * np.array([0, np.sqrt(2) / 2, -np.sqrt(2) / 2])
+    axis_angle = np.radians(180) * np.array(
+        [0, np.sqrt(2) / 2, -np.sqrt(2) / 2]
+    )
     quat = tr.axisangle_to_quat(axis_angle)
     attachment_site = arena.mjcf_model.worldbody.add(
         "site",
@@ -89,7 +91,9 @@ def main(args: Args) -> None:
     # Add ball.
     ball = arena.mjcf_model.worldbody.add("body", name="ball", pos="0 -0.3 0.2")
     ball.add("freejoint")
-    ball.add("geom", type="sphere", size="0.028", group="0", mass="0.043", condim="4")
+    ball.add(
+        "geom", type="sphere", size="0.028", group="0", mass="0.043", condim="4"
+    )
 
     physics = mjcf.Physics.from_mjcf_model(arena.mjcf_model)
     if args.compensate_gravity:

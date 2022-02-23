@@ -7,6 +7,7 @@ from dm_robotics.transformations import transformations as tr
 from shadow_hand.models.arenas.empty import Arena
 from shadow_hand.models.hands import shadow_hand_e
 
+
 enums = mjbindings.enums
 mjlib = mjbindings.mjlib
 
@@ -55,7 +56,9 @@ def main() -> None:
     frames = []
     axis_angle = np.array([0, np.sqrt(2) / 2, -np.sqrt(2) / 2])
     for mag in np.linspace(0, np.pi):
-        hand.set_pose(physics, quaternion=tr.axisangle_to_quat(mag * axis_angle))
+        hand.set_pose(
+            physics, quaternion=tr.axisangle_to_quat(mag * axis_angle)
+        )
         physics.step()
         frames.append(render(physics))
     imageio.mimsave("temp/rotate_hand.mp4", frames, fps=30)

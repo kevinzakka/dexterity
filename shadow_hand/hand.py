@@ -34,5 +34,7 @@ class Hand(abc.ABC, composer.Entity):
         """List of joint elements belonging to the hand."""
 
     @abc.abstractmethod
-    def set_joint_angles(self, physics: mjcf.Physics, joint_angles: np.ndarray) -> None:
+    def set_joint_angles(
+        self, physics: mjcf.Physics, joint_angles: np.ndarray
+    ) -> None:
         """Sets the joints of the hand to a given configuration."""
