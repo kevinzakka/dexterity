@@ -1,9 +1,5 @@
-import collections
-
 import numpy as np
-from dm_control import mjcf, viewer
-from dm_control.rl import control
-from dm_control.suite import base
+from dm_control import composer  # , viewer
 from dm_robotics.transformations import transformations as tr
 
 from shadow_hand.models.arenas.empty import Arena
@@ -41,8 +37,8 @@ def _add_hand(arena: Arena) -> shadow_hand_e.ShadowHandSeriesE:
     return hand
 
 
-class SimpleTask(base.Task):
-    def __init__(self, random=None) -> None:
+class SimpleTask(composer.Task):
+    def __init__(self) -> None:
         self._arena = _build_arena("simple_task", disable_gravity=False)
         self._hand = _add_hand(self._arena)
         self._ball = self._arena.mjcf_model.worldbody.add(
@@ -52,29 +48,30 @@ class SimpleTask(base.Task):
         self._ball.add(
             "geom", type="sphere", size="0.028", group="0", mass="0.043", condim="4"
         )
-        super().__init__(random)
 
-    def initialize_episode(self, physics):
-        return super().initialize_episode(physics)
+        self._hand.observables.enable_all()
+        self._hand.observables.joint_torques.enabled = False
 
-    def get_observation(self, physics):
-        obs = collections.OrderedDict()
-        return obs
+    @property
+    def root_entity(self):
+        return self._arena
 
-    def get_reward(self, physics) -> float:
+    def get_reward(self, physics):
         return 0.0
-
-    def action_spec(self, physics):
-        return super().action_spec(physics)
 
 
 if __name__ == "__main__":
 
     def get_env():
         task = SimpleTask()
-        physics = mjcf.Physics.from_mjcf_model(task._arena.mjcf_model)
-        env = control.Environment(physics=physics, task=task)
+        env = composer.Environment(task=task)
         return env
 
     # Launch the viewer application.
-    viewer.launch(get_env)
+    # viewer.launch(get_env)
+
+    env = get_env()
+    timestep = env.reset()
+
+    for key, value in timestep.observation.items():
+        print(f"{key}: {value.shape}")

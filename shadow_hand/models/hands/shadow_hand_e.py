@@ -72,7 +72,6 @@ class ShadowHandSeriesE(hand.Hand):
         self,
         name: str = "shadow_hand_e",
         actuation: consts.Actuation = consts.Actuation.POSITION,
-        randomize_color: bool = False,
     ) -> None:
         """Initializes the hand.
 
@@ -80,22 +79,17 @@ class ShadowHandSeriesE(hand.Hand):
             name: The name of the hand. Used as a prefix in the MJCF name attributes.
             actuation: Instance of `shadow_hand_e_constants.Actuation` specifying which
                 actuation method to use.
-            randomize_color: Whether to randomize the color of the hand.
         """
         self._mjcf_root = mjcf.from_path(str(consts.SHADOW_HAND_E_XML))
 
         self._mjcf_root.model = name
         self._actuation = actuation
-        self._randomize_color = randomize_color
 
         self._parse_mjcf_elements()
         self._add_fingertip_sites()
         self._add_tendons()
         self._add_actuators()
         self._add_sensors()
-
-        if self._randomize_color:
-            self._color_hand()
 
     # ================= #
     # Accessors.
@@ -404,12 +398,3 @@ class ShadowHandSeriesE(hand.Hand):
             )
             self._joint_torque_sensors.append(torque_sensor_elem)
             self._joint_torque_sensor_elem_mapping[joint] = torque_sensor_elem
-
-    # TODO(kevin): Move this method to a randomization module.
-    def _color_hand(self) -> None:
-        """Assigns a random RGB color to the hand."""
-        for geom_name in consts.COLORED_GEOMS:
-            geom = self._mjcf_root.find("geom", geom_name)
-            rgb = np.random.uniform(size=3).flatten()
-            rgba = np.append(rgb, 1)
-            geom.rgba = rgba
