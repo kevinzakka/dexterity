@@ -274,7 +274,7 @@ class IKSolver:
             if not_enough_progress:
                 break
 
-        qpos = np.array(self._physics.data.qpos)
+        qpos = np.array(self._all_joints_binding.qpos, copy=True)
         return _Solution(qpos=qpos, linear_err=avg_linear_err)
 
     def _compute_joint_velocities(
