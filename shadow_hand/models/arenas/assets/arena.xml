@@ -1,7 +1,7 @@
 <mujoco model="arena">
-    <compiler coordinate="local" angle="radian" eulerseq="xyz" boundmass="1e-5" boundinertia="1e-11"/>
+    <!-- <compiler coordinate="local" angle="radian" eulerseq="xyz" boundmass="1e-5" boundinertia="1e-11"/> -->
 
-    <option cone="elliptic" noslip_iterations="5" noslip_tolerance="0" timestep="0.002"/>
+    <!-- <option cone="elliptic" noslip_iterations="5" noslip_tolerance="0" timestep="0.002"/> -->
 
     <visual>
         <map znear="0.01"/>

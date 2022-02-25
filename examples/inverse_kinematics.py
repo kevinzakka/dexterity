@@ -23,7 +23,10 @@ def render_scene(
     scene_option = mujoco.wrapper.core.MjvOption()
     scene_option.flags[enums.mjtVisFlag.mjVIS_TRANSPARENT] = transparent
     return physics.render(
-        width=640, height=480, camera_id=cam_id, scene_option=scene_option
+        width=640,
+        height=480,
+        camera_id=cam_id,
+        scene_option=scene_option,
     )
 
 
@@ -71,8 +74,6 @@ def _add_hand(arena: Arena):
         "site",
         type="sphere",
         pos=[0, 0, 0.1],
-        # pos="0 -.4 0.2",
-        # euler="-1.57 0 0",
         quat=quat,
         rgba="0 0 0 0",
         size="0.01",
@@ -182,6 +183,12 @@ def main(args: Args) -> None:
                 plt.subplots_adjust(wspace=0, hspace=0)
                 plt.tight_layout()
                 plt.show()
+                plt.close()
+
+                plt.figure()
+                plt.imshow(im_actual_tr)
+                plt.show()
+                plt.close()
 
             successes += 1
         else:

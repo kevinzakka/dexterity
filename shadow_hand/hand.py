@@ -60,14 +60,17 @@ class HandObservables(composer.Observables):
 
     _entity: Hand
 
+    # shape: (1, 24)
     @composer.observable
     def joint_positions(self) -> observable.MJCFFeature:
         return observable.MJCFFeature(kind="qpos", mjcf_element=self._entity.joints)
 
+    # shape: (1, 24)
     @composer.observable
     def joint_velocities(self) -> observable.MJCFFeature:
         return observable.MJCFFeature(kind="qvel", mjcf_element=self._entity.joints)
 
+    # shape: (1, 24)
     @composer.observable
     def joint_torques(self) -> observable.Generic:
         def _get_joint_torques(physics: mjcf.Physics) -> np.ndarray:
@@ -78,6 +81,7 @@ class HandObservables(composer.Observables):
 
         return observable.Generic(raw_observation_callable=_get_joint_torques)
 
+    # shape: (1, 15)
     @composer.observable
     def fingerip_positions(self) -> observable.Generic:
         def _get_fingertip_positions(physics: mjcf.Physics) -> np.ndarray:
@@ -89,6 +93,7 @@ class HandObservables(composer.Observables):
 
         return observable.Generic(raw_observation_callable=_get_fingertip_positions)
 
+    # shape: (1, 20)
     @composer.observable
     def fingertip_orientations(self) -> observable.Generic:
         def _get_fingertip_orientations(physics: mjcf.Physics) -> np.ndarray:
@@ -100,6 +105,7 @@ class HandObservables(composer.Observables):
 
         return observable.Generic(raw_observation_callable=_get_fingertip_orientations)
 
+    # shape: (1, 15)
     @composer.observable
     def fingertip_linear_velocities(self) -> observable.Generic:
         def _get_fingertip_linear_velocities(physics: mjcf.Physics) -> np.ndarray:
@@ -113,6 +119,7 @@ class HandObservables(composer.Observables):
             raw_observation_callable=_get_fingertip_linear_velocities
         )
 
+    # shape: (1, 15)
     @composer.observable
     def fingertip_angular_velocities(self) -> observable.Generic:
         def _get_fingertip_angular_velocities(physics: mjcf.Physics) -> np.ndarray:
