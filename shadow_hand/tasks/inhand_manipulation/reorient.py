@@ -2,17 +2,18 @@
 
 import numpy as np
 from dm_control import composer
-
-# from dm_control.composer import initializers, variation
-# from dm_control.composer.observation import observable
-# from dm_control.mujoco.wrapper import mjbindings
-# from dm_control.utils import rewards
+from dm_control.manipulation.shared import observations
 from dm_robotics.transformations import transformations as tr
 
+from shadow_hand import hand
 from shadow_hand.models.hands import shadow_hand_e
-
-# from shadow_hand.models.hands import shadow_hand_e_constants as hand_consts
-from shadow_hand.tasks.inhand_manipulation import arenas, constants, registry, tags
+from shadow_hand.tasks.inhand_manipulation import (
+    arenas,
+    cameras,
+    constants,
+    registry,
+    tags,
+)
 
 
 # Alpha value of the visual goal hint representing the goal state for each task.
@@ -24,9 +25,9 @@ class _Common(composer.Task):
 
     def __init__(
         self,
-        arena,
-        hand,
-        control_timestep,
+        arena: composer.Arena,
+        hand: hand.Hand,
+        control_timestep: float,
     ) -> None:
 
         self._arena = arena
@@ -37,12 +38,21 @@ class _Common(composer.Task):
         attachment_site = arena.mjcf_model.worldbody.add(
             "site",
             type="sphere",
-            pos=(0, 0, 0.1),
+            pos=(0, 0.2, 0.1),
             quat=quat,
             rgba="0 0 0 0",
             size="0.01",
         )
         self._arena.attach(hand, attachment_site)
+
+        self._task_observables = cameras.add_camera_observables(
+            arena,
+            observations.PERFECT_FEATURES,
+            cameras.FRONT_CLOSE,
+            cameras.TOP_DOWN,
+            cameras.LEFT_CLOSE,
+            cameras.RIGHT_CLOSE,
+        )
 
         self.control_timestep = control_timestep
 
@@ -55,6 +65,7 @@ class _Common(composer.Task):
         return self._hand
 
     def get_reward(self, physics) -> float:
+        del physics
         return 0.0
 
 
