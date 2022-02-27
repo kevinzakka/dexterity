@@ -21,7 +21,7 @@ def prompt_environment_name(prompt: str, values: Sequence[str]) -> str:
     environment_name = None
     while not environment_name:
         environment_name = input(prompt)
-        if not environment_name or values.index(environment_name) < 0:
+        if not environment_name or environment_name not in values:
             print(f"'{environment_name}' is not a valid environment name.")
             environment_name = None
     return environment_name

@@ -14,9 +14,11 @@ This repository contains code related to my research involving the [Shadow Hand]
     - [ ] Implement LSQP `CartesianVelocitytoJointVelocityMapper`.
     - [ ] Add support for disabling wrist pitch joint (as in OpenAI's [Learning Dexterity](https://arxiv.org/abs/1808.00177)).
     - [ ] Consider speeding up  with C++ implementation if too slow.
-- [ ] Optimize scene light settings in XML file.
+- [x] Optimize scene light settings in XML file.
 - [ ] Add props to place objects in the palm of the hand.
     - [ ] Load YCB and EGAD objects.
+- [x] Implement `task` and `env` suite.
+    - [ ] Figure out episode termination and after step criteria.
 
 ## Changelog
 

@@ -6,11 +6,12 @@ from typing import Optional
 
 import numpy as np
 from dm_control import composer
-from dm_control import mujoco
+from dm_control import mjcf
 from dm_control.composer import initializers
 from dm_control.composer.observation import observable
 from dm_control.composer.variation import distributions
 from dm_control.composer.variation import rotations
+from dm_control.utils import rewards
 from dm_robotics.transformations import transformations as tr
 
 from shadow_hand import arena
@@ -47,6 +48,14 @@ _HINT_POS = (0.12, 0.0, 0.15)
 # Size of the prop, in meters.
 _PROP_SIZE = 0.02
 
+# Fudge factor for taking the inverse of the orientation error, in radians.
+_ORIENTATION_EPS = 0.1
+# Threshold for successful orientation, in radians.
+_ORIENTATION_THRESHOLD = 0.1
+_ORIENTATION_COEF = 1.0
+_SUCCESS_BONUS_COEF = 800.0
+_ACTION_SMOOTHING_COEF = -0.1  # NOTE(kevin): negative sign.
+
 _WORKSPACE = Workspace(
     prop_bbox=workspaces.BoundingBox(
         lower=(-0.02, -0.22, 0.16),
@@ -73,8 +82,11 @@ _HAND_OBSERVABLES = observations.ObservableNames(
 )
 
 
-class _Common(composer.Task):
-    """Common building block for reorientation tasks."""
+class ReOrient(composer.Task):
+    """Manipulate an object to a goal orientation.
+
+    The goal orientation is sampled from SO(3) or
+    """
 
     def __init__(
         self,
@@ -82,12 +94,14 @@ class _Common(composer.Task):
         hand: hand.Hand,
         obs_settings: observations.ObservationSettings,
         workspace: Workspace,
-        control_timestep: float,
-        physics_timestep: float,
+        restrict_orientation: bool = False,
+        control_timestep: float = constants.CONTROL_TIMESTEP,
+        physics_timestep: float = constants.PHYSICS_TIMESTEP,
     ) -> None:
 
         self._arena = arena
         self._hand = hand
+        self._restrict_orientation = restrict_orientation
 
         # Attach the hand to the arena.
         hand_attachment_site = arena.mjcf_model.worldbody.add(
@@ -162,14 +176,16 @@ class _Common(composer.Task):
             physics_timestep=physics_timestep,
         )
 
-    def _get_quaternion_difference(self, physics: mujoco.Physics) -> np.ndarray:
+        if restrict_orientation:
+            self._prop_orientation_sampler = workspaces.uniform_z_rotation
+        else:
+            self._prop_orientation_sampler = rotations.UniformQuaternion()
+
+    def _get_quaternion_difference(self, physics: mjcf.Physics) -> np.ndarray:
         """Returns the quaternion difference between the prop and the target prop."""
         prop_quat = physics.bind(self._prop.orientation).sensordata
         target_prop_quat = physics.bind(self._hint_prop.orientation).sensordata
-        return geometry_utils.get_orientation_error(
-            to_quat=target_prop_quat,
-            from_quat=prop_quat,
-        )
+        return tr.quat_diff_active(source_quat=prop_quat, target_quat=target_prop_quat)
 
     @property
     def task_observables(self) -> collections.OrderedDict:
@@ -183,73 +199,71 @@ class _Common(composer.Task):
     def hand(self) -> composer.Entity:
         return self._hand
 
-
-class ReOrientSO3(_Common):
-    """Manipulate an object to a desired goal configuration sampled from SO(3)."""
-
-    def __init__(
-        self,
-        arena: arena.Arena,
-        hand: hand.Hand,
-        obs_settings: observations.ObservationSettings,
-        workspace: Workspace,
-        control_timestep: float,
-        physics_timestep: float,
+    def initialize_episode(
+        self, physics: mjcf.Physics, random_state: np.random.RandomState
     ) -> None:
-        super().__init__(
-            arena, hand, obs_settings, workspace, control_timestep, physics_timestep
+        # Randomly sample a starting configuration for the prop.
+        self._prop_placer(physics=physics, random_state=random_state)
+
+        # Randomly sample a goal orientation and use it to configure the orientation of
+        # the translucent hint prop.
+        self._goal_quat = self._prop_orientation_sampler(random_state=random_state)
+        self._hint_prop.set_pose(physics=physics, quaternion=self._goal_quat)
+
+    def get_reward(self, physics: mjcf.Physics) -> float:
+        return _get_shaped_reorientation_reward(
+            physics,
+            prop_quat=physics.bind(self._prop.orientation).sensordata,
+            goal_quat=self._goal_quat,
         )
 
-        self._prop_orientation_sampler = rotations.UniformQuaternion()
 
-    def initialize_episode(
-        self, physics: mujoco.Physics, random_state: np.random.RandomState
-    ) -> None:
-        # Randomly sample a goal orientation and set the translucent hint prop.
-        self._goal_quat = self._prop_orientation_sampler(random_state=random_state)
-        self._hint_prop.set_pose(physics, quaternion=self._goal_quat)
+def _get_shaped_reorientation_reward(
+    physics: mjcf.Physics,
+    prop_quat: np.ndarray,
+    goal_quat: np.ndarray,
+) -> float:
+    """Returns a shaped reward for re-orientation, as described in [1].
 
-        # Randomly sample a starting configuration for the prop.
-        self._prop_placer(physics, random_state)
+    The reward is a weighted sum of the following components:
+        - orientation reward: The inverse of the absolute value of the angular error
+            between the prop's current orientation and the goal orientation.
+        - success reward: 1.0 if the the angular error is within a tolerance and 0.0
+            otherwise.
+        - action smoothness reward: The negative of the squared L2 norm of the control
+            action.
 
-    def get_reward(self, physics) -> float:
-        # TODO(kevin): Implement.
-        del physics
-        return 0.0
+    Args:
+        physics: An `mjcf.Physics` instance.
+        prop_quat: The current orientation of the prop, as a quaternion.
+        goal_quat: The goal orientation of the prop, as a quaternion.
 
+    References:
+        [1]: A System for General In-Hand Object Re-Orientation,
+        https://arxiv.org/abs/2111.03043
+    """
+    # Orientation component.
+    angular_error = np.linalg.norm(
+        geometry_utils.get_orientation_error(to_quat=prop_quat, from_quat=goal_quat)
+    )
+    angular_error_abs = np.abs(angular_error)
+    orientation_reward = 1.0 / (angular_error_abs + _ORIENTATION_EPS)
 
-class ReOrientZ(_Common):
-    """Like `ReOrientSO3` but goal rotation is only about the Z-axis."""
+    # Success bonus component.
+    success_bonus_reward = rewards.tolerance(
+        x=angular_error_abs,
+        bounds=(0, _ORIENTATION_THRESHOLD),
+        margin=0.0,
+    )
 
-    def __init__(
-        self,
-        arena: arena.Arena,
-        hand: hand.Hand,
-        obs_settings: observations.ObservationSettings,
-        workspace: Workspace,
-        control_timestep: float,
-        physics_timestep: float,
-    ) -> None:
-        super().__init__(
-            arena, hand, obs_settings, workspace, control_timestep, physics_timestep
-        )
+    # Action smoothing component.
+    action_smoothing_reward = np.linalg.norm(physics.data.ctrl) ** 2
 
-        self._prop_orientation_sampler = workspaces.uniform_z_rotation
-
-    def initialize_episode(
-        self, physics: mujoco.Physics, random_state: np.random.RandomState
-    ) -> None:
-        # Randomly sample a goal orientation and set the translucent hint prop.
-        self._goal_quat = self._prop_orientation_sampler(random_state=random_state)
-        self._hint_prop.set_pose(physics, quaternion=self._goal_quat)
-
-        # Randomly sample a starting configuration for the prop.
-        self._prop_placer(physics, random_state)
-
-    def get_reward(self, physics) -> float:
-        # TODO(kevin): Implement.
-        del physics
-        return 0.0
+    return (
+        orientation_reward * _ORIENTATION_COEF
+        + success_bonus_reward * _SUCCESS_BONUS_COEF
+        + action_smoothing_reward * _ACTION_SMOOTHING_COEF
+    )
 
 
 def _replace_alpha(rgba: np.ndarray, alpha: float = 0.3) -> np.ndarray:
@@ -289,40 +303,20 @@ def _hintify(entity: composer.Entity, alpha: Optional[float] = None) -> None:
             geom.conaffinity = 0
 
 
-def _build_arena(name: str) -> arena.Arena:
-    arena = arenas.Standard(name)
-    arena.mjcf_model.visual.__getattr__("global").offheight = 480
-    arena.mjcf_model.visual.__getattr__("global").offwidth = 640
-    return arena
-
-
-def _reorient_SO3(obs_settings: observations.ObservationSettings) -> _Common:
-    """Configure and instantiate a `_Common` task."""
-    arena = _build_arena("arena")
+def _reorient(
+    obs_settings: observations.ObservationSettings, restrict_orientation: bool
+) -> composer.Task:
+    """Configure and instantiate a `ReOrient` task."""
+    arena = arenas.Standard()
     hand = shadow_hand_e.ShadowHandSeriesE(
         observable_options=observations.make_options(obs_settings, _HAND_OBSERVABLES),
     )
-    return ReOrientSO3(
+    return ReOrient(
         arena=arena,
         hand=hand,
         obs_settings=obs_settings,
         workspace=_WORKSPACE,
-        control_timestep=constants.CONTROL_TIMESTEP,
-        physics_timestep=constants.PHYSICS_TIMESTEP,
-    )
-
-
-def _reorient_Z(obs_settings: observations.ObservationSettings) -> _Common:
-    """Configure and instantiate a `_Common` task."""
-    arena = _build_arena("arena")
-    hand = shadow_hand_e.ShadowHandSeriesE(
-        observable_options=observations.make_options(obs_settings, _HAND_OBSERVABLES),
-    )
-    return ReOrientZ(
-        arena=arena,
-        hand=hand,
-        obs_settings=obs_settings,
-        workspace=_WORKSPACE,
+        restrict_orientation=restrict_orientation,
         control_timestep=constants.CONTROL_TIMESTEP,
         physics_timestep=constants.PHYSICS_TIMESTEP,
     )
@@ -330,9 +324,13 @@ def _reorient_Z(obs_settings: observations.ObservationSettings) -> _Common:
 
 @registry.add(tags.FEATURES)
 def reorient_so3():
-    return _reorient_SO3(obs_settings=observations.PERFECT_FEATURES)
+    return _reorient(
+        obs_settings=observations.PERFECT_FEATURES, restrict_orientation=False
+    )
 
 
 @registry.add(tags.FEATURES, tags.EASY)
 def reorient_z():
-    return _reorient_Z(obs_settings=observations.PERFECT_FEATURES)
+    return _reorient(
+        obs_settings=observations.PERFECT_FEATURES, restrict_orientation=True
+    )
