@@ -8,7 +8,6 @@ from shadow_hand import hints
 from shadow_hand.controllers import mapper
 from shadow_hand.utils import mujoco_utils
 
-
 mjlib = mjbindings.mjlib
 enums = mjbindings.enums
 

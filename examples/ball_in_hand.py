@@ -4,7 +4,8 @@ from typing import List
 import dcargs
 import imageio
 import numpy as np
-from dm_control import mjcf, mujoco
+from dm_control import mjcf
+from dm_control import mujoco
 from dm_control.mujoco.wrapper.mjbindings import enums
 from dm_robotics.transformations import transformations as tr
 from matplotlib import pyplot as plt

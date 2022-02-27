@@ -5,12 +5,13 @@ from typing import Mapping, Optional, Sequence
 import numpy as np
 from dm_control import mjcf
 from dm_control.mujoco.wrapper import mjbindings
-from dm_robotics.geometry import geometry, mujoco_physics
+from dm_robotics.geometry import geometry
+from dm_robotics.geometry import mujoco_physics
 
 from shadow_hand import controllers
 from shadow_hand.models.hands import shadow_hand_e_constants as consts
-from shadow_hand.utils import geometry_utils, mujoco_utils
-
+from shadow_hand.utils import geometry_utils
+from shadow_hand.utils import mujoco_utils
 
 mjlib = mjbindings.mjlib
 

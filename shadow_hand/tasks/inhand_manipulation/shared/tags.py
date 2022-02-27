@@ -2,3 +2,5 @@
 
 FEATURES = "features"
 VISION = "vision"
+
+EASY = "easy"

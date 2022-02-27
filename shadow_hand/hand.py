@@ -2,7 +2,8 @@ import abc
 from typing import List
 
 import numpy as np
-from dm_control import composer, mjcf
+from dm_control import composer
+from dm_control import mjcf
 from dm_control.composer.observation import observable
 from dm_robotics.transformations import transformations as tr
 

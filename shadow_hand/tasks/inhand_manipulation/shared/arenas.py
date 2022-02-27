@@ -2,10 +2,10 @@
 
 from typing import Optional
 
-from dm_control import composer
+from shadow_hand import arena
 
 
-class Standard(composer.Arena):
+class Standard(arena.Arena):
     """Suite-specific subclass of the standard Composer arena."""
 
     def _build(self, name: Optional[str] = None) -> None:

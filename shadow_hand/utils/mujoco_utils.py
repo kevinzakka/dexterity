@@ -7,7 +7,6 @@ from dm_robotics.transformations import transformations as tr
 
 from shadow_hand import hints
 
-
 mjlib = mjbindings.mjlib
 enums = mjbindings.enums
 

@@ -1,5 +1,6 @@
 import numpy as np
-from absl.testing import absltest, parameterized
+from absl.testing import absltest
+from absl.testing import parameterized
 from dm_control import mjcf
 
 from shadow_hand.models.hands import shadow_hand_e

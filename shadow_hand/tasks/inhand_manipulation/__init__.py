@@ -1,12 +1,11 @@
-"""A set of in-hand dexterous manipulation tasks."""
+"""A set of in-hand manipulation tasks."""
 
 from typing import Optional
 
 from dm_control import composer as _composer
 
-from shadow_hand.tasks.inhand_manipulation import registry as _registry
 from shadow_hand.tasks.inhand_manipulation import reorient as _reorient
-
+from shadow_hand.tasks.inhand_manipulation.shared import registry as _registry
 
 _registry.done_importing_tasks()
 

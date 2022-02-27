@@ -2,7 +2,6 @@
 
 from dm_control.utils import containers
 
-
 _ALL_CONSTRUCTORS = containers.TaggedTasks(allow_overriding_keys=False)
 
 add = _ALL_CONSTRUCTORS.add

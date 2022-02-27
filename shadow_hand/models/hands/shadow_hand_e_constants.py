@@ -9,7 +9,6 @@ import numpy as np
 
 from shadow_hand import _SRC_ROOT
 
-
 # Path to the shadow hand E series XML file.
 SHADOW_HAND_E_XML: Path = (
     _SRC_ROOT

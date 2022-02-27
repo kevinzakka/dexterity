@@ -7,6 +7,8 @@ from typing import Tuple
 from dm_control import composer
 from dm_control.composer.observation import observable
 
+from shadow_hand.tasks.inhand_manipulation.shared import observations
+
 
 @dataclasses.dataclass(frozen=True)
 class CameraConfig:
@@ -50,13 +52,13 @@ TOP_DOWN = CameraConfig(
 
 def add_camera_observables(
     entity: composer.Entity,
-    obs_settings,
-    *camera_configs,
+    obs_settings: observations.ObservationSettings,
+    *camera_configs: CameraConfig,
 ) -> collections.OrderedDict:
     obs_dict = collections.OrderedDict()
     for config in camera_configs:
         camera = entity.mjcf_model.worldbody.add("camera", **dataclasses.asdict(config))
         obs = observable.MJCFCamera(camera)
-        obs.configure(**obs_settings.camera._asdict())
+        obs.configure(**dataclasses.asdict(obs_settings.camera))
         obs_dict[config.name] = obs
     return obs_dict

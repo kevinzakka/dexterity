@@ -1,12 +1,12 @@
 import imageio
 import numpy as np
-from dm_control import mjcf, mujoco
+from dm_control import mjcf
+from dm_control import mujoco
 from dm_control.mujoco.wrapper import mjbindings
 from dm_robotics.transformations import transformations as tr
 
 from shadow_hand.models.arenas.empty import Arena
 from shadow_hand.models.hands import shadow_hand_e
-
 
 enums = mjbindings.enums
 mjlib = mjbindings.mjlib

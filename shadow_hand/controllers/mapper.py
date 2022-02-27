@@ -9,7 +9,6 @@ from dm_control.mujoco.wrapper import mjbindings
 
 from shadow_hand import hints
 
-
 mjlib = mjbindings.mjlib
 enums = mjbindings.enums
 

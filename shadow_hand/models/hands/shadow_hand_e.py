@@ -8,7 +8,6 @@ from shadow_hand import hand
 from shadow_hand.hints import MjcfElement
 from shadow_hand.models.hands import shadow_hand_e_constants as consts
 
-
 # NOTE(kevin): See if we can use the cached_property to speed up property access.
 # from dm_control.composer import cached_property
 

@@ -1,0 +1,1 @@
+from shadow_hand.tasks.inhand_manipulation.props.openai_cube import OpenAICube

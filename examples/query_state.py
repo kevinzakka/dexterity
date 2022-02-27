@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from dm_control import mjcf, mujoco
+from dm_control import mjcf
+from dm_control import mujoco
 from dm_control.mujoco.wrapper.mjbindings import enums
 
 from shadow_hand.models.hands import shadow_hand_e
