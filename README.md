@@ -2,7 +2,7 @@
 
 This repository contains code related to my research involving the [Shadow Hand](https://www.shadowrobot.com/).
 
-<img src="./assets/teaser.gif" width="40%"/>
+<img src="./assets/teaser.gif" width="300"/>
 
 ## Todos
 

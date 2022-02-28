@@ -17,7 +17,7 @@ def render(
     while physics.data.time < duration:
         physics.step()
         if len(frames) < physics.data.time * framerate:
-            pixels = physics.render(width=640, height=480, camera_id="cam0")
+            pixels = physics.render(width=300, height=300, camera_id="cam0")
             frames.append(pixels)
 
 
