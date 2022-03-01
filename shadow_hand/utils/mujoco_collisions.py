@@ -11,8 +11,7 @@ from typing import Optional, Sequence
 from dm_control import mjcf
 from dm_control import mujoco
 
-_DEFAULT_OBJECT_COLLISION_MARGIN = 0.0002
-_DEFAULT_COLLISION_MARGIN = 1e-8
+_DEFAULT_COLLISION_MARGIN: float = 1e-8
 
 
 def exclude_bodies_based_on_contype_conaffinity(

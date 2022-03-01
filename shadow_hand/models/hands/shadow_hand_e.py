@@ -1,4 +1,3 @@
-import dataclasses
 from typing import Dict, List
 
 import numpy as np
@@ -7,62 +6,9 @@ from dm_control import mjcf
 
 from shadow_hand import hand
 from shadow_hand.hints import MjcfElement
+from shadow_hand.models.hands import shadow_hand_e_actuation
 from shadow_hand.models.hands import shadow_hand_e_constants as consts
-
-# NOTE(kevin): See if we can use the cached_property to speed up property access.
-# from dm_control.composer import cached_property
-
-
-# NOTE(kevin): There's a damping parameter at the <joint> level, which means we in fact
-# have a PD-based position controller under the hood. So `kp` here is the proportional
-# gain and the damping parameter is related to the derivative gain.
-@dataclasses.dataclass(frozen=True)
-class _ActuatorParams:
-    kp: float = 1.0
-    """Position feedback gain for the MuJoCo actuator."""
-
-
-# TODO(kevin): Need to tune these.
-# NOTE(kevin): Some terminology:
-# little finger: metacarpal - knuckle - proximal - middle - distal
-# thumb: base - proximal - middle - distal
-# others: knuckle - proximal - middle - distal
-_WR_GAIN = 20.0
-_TH_GAIN = 3.0
-_KNUCKLE_GAIN = 1.2
-_PROXIMAL_GAIN = 1.2
-_MIDDLE_DISTAL_GAIN = 0.8
-_METACARPAL_GAIN = 1.2
-_ACTUATOR_PARAMS = {
-    consts.Actuation.POSITION: {
-        # Wrist.
-        consts.Actuators.A_WRJ1: _ActuatorParams(kp=_WR_GAIN),
-        consts.Actuators.A_WRJ0: _ActuatorParams(kp=_WR_GAIN),
-        # First finger.
-        consts.Actuators.A_FFJ3: _ActuatorParams(kp=_KNUCKLE_GAIN),
-        consts.Actuators.A_FFJ2: _ActuatorParams(kp=_PROXIMAL_GAIN),
-        consts.Actuators.A_FFJ1: _ActuatorParams(kp=_MIDDLE_DISTAL_GAIN),
-        # Middle finger.
-        consts.Actuators.A_MFJ3: _ActuatorParams(kp=_KNUCKLE_GAIN),
-        consts.Actuators.A_MFJ2: _ActuatorParams(kp=_PROXIMAL_GAIN),
-        consts.Actuators.A_MFJ1: _ActuatorParams(kp=_MIDDLE_DISTAL_GAIN),
-        # Ring finger.
-        consts.Actuators.A_RFJ3: _ActuatorParams(kp=_KNUCKLE_GAIN),
-        consts.Actuators.A_RFJ2: _ActuatorParams(kp=_PROXIMAL_GAIN),
-        consts.Actuators.A_RFJ1: _ActuatorParams(kp=_MIDDLE_DISTAL_GAIN),
-        # Little finger.
-        consts.Actuators.A_LFJ4: _ActuatorParams(kp=_METACARPAL_GAIN),
-        consts.Actuators.A_LFJ3: _ActuatorParams(kp=_KNUCKLE_GAIN),
-        consts.Actuators.A_LFJ2: _ActuatorParams(kp=_PROXIMAL_GAIN),
-        consts.Actuators.A_LFJ1: _ActuatorParams(kp=_MIDDLE_DISTAL_GAIN),
-        # Thumb.
-        consts.Actuators.A_THJ4: _ActuatorParams(kp=_TH_GAIN),
-        consts.Actuators.A_THJ3: _ActuatorParams(kp=_TH_GAIN),
-        consts.Actuators.A_THJ2: _ActuatorParams(kp=_TH_GAIN),
-        consts.Actuators.A_THJ1: _ActuatorParams(kp=_TH_GAIN),
-        consts.Actuators.A_THJ0: _ActuatorParams(kp=_TH_GAIN),
-    },
-}
+from shadow_hand.utils import mujoco_actuation
 
 
 class ShadowHandSeriesE(hand.Hand):
@@ -191,22 +137,6 @@ class ShadowHandSeriesE(hand.Hand):
         # These are queried from the mjcf instead of the hard-coded constants. This is
         # to account for any possible runtime randomizations.
         return np.array(physics.bind(self._joints).range, copy=True)
-
-    def clip_position_control(
-        self, physics: mjcf.Physics, control: np.ndarray
-    ) -> np.ndarray:
-        """Clips the position control vector to the supported range.
-
-        Args:
-            physics: An `mjcf.Physics` instance.
-            control: The position control vector, of shape (20,).
-        """
-        bounds = self.actuator_ctrl_range(physics)
-        return np.clip(
-            a=control,
-            a_min=bounds[:, 0],
-            a_max=bounds[:, 1],
-        )
 
     def set_position_control(self, physics: mjcf.Physics, control: np.ndarray) -> None:
         """Sets the positions of the joints to the given control command.
@@ -342,35 +272,37 @@ class ShadowHandSeriesE(hand.Hand):
     def _add_position_actuators(self) -> None:
         """Adds position actuators to the mjcf model."""
 
-        def add_actuator(act: consts.Actuators, params: _ActuatorParams) -> MjcfElement:
-            # Create a position actuator mjcf elem.
-            actuator = self._mjcf_root.actuator.add(
-                "position",
-                name=act.name,
-                ctrllimited=True,
-                ctrlrange=consts.ACTUATION_LIMITS[self._actuation][act],
-                forcelimited=True,
-                forcerange=consts.EFFORT_LIMITS[act],
-                kp=params.kp,
-            )
-
-            # NOTE(kevin): When specifying the joint or tendon to which an actuator is
-            # attached, the mjcf element itself is used, rather than the name string.
-            if act in consts.ACTUATOR_TENDON_MAPPING:
-                actuator.tendon = self._tendon_elem_mapping[
-                    consts.ACTUATOR_TENDON_MAPPING[act]
-                ]
-            else:
-                actuator.joint = self._joint_elem_mapping[
-                    consts.ACTUATOR_JOINT_MAPPING[act][0]
-                ]
-
-            return actuator
+        self._mjcf_root.default.general.forcelimited = "true"
+        self._mjcf_root.actuator.motor.clear()
 
         self._actuators: List[mjcf.Element] = []
         self._actuator_elem_mapping: Dict[consts.Actuators, mjcf.Element] = {}
-        for actuator, actuator_params in _ACTUATOR_PARAMS[self._actuation].items():
-            actuator_elem = add_actuator(actuator, actuator_params)
+        for actuator, actuator_params in shadow_hand_e_actuation.ACTUATOR_PARAMS[
+            self._actuation
+        ].items():
+            if actuator in consts.ACTUATOR_TENDON_MAPPING:
+                elem = self._tendon_elem_mapping[
+                    consts.ACTUATOR_TENDON_MAPPING[actuator]
+                ]
+                elem_type = "tendon"
+            else:
+                elem = self._joint_elem_mapping[
+                    consts.ACTUATOR_JOINT_MAPPING[actuator][0]
+                ]
+                elem_type = "joint"
+                elem.damping = actuator_params.damping
+
+            qposrange = consts.ACTUATION_LIMITS[self._actuation][actuator]
+            actuator_elem = mujoco_actuation.add_position_actuator(
+                elem=elem,
+                elem_type=elem_type,
+                qposrange=qposrange,
+                ctrlrange=qposrange,
+                kp=actuator_params.kp,
+                forcerange=consts.EFFORT_LIMITS[actuator],
+                name=actuator.name,
+            )
+
             self._actuator_elem_mapping[actuator] = actuator_elem
             self._actuators.append(actuator_elem)
 

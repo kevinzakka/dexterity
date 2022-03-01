@@ -22,12 +22,15 @@ This repository contains code related to my research involving the [Shadow Hand]
     - [x] Add shaped reward.
     - [x] Add episode termination criteria.
     - [x] Figure out time limit vs max time steps.
-
-## Changelog
+- [ ] Should actuator limits for the hand be scaled to `[-1, 1]`?
 
 ## Notes
 
 See [NOTES.md](NOTES.md) for more information.
+
+## Logbook
+
+See [LOG.md](LOG.md) for more information.
 
 ## Questions
 

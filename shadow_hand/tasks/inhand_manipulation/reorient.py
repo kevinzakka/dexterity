@@ -301,7 +301,7 @@ def _get_shaped_reorientation_reward(
         [1]: A System for General In-Hand Object Re-Orientation,
         https://arxiv.org/abs/2111.03043
     """
-    shaped_reward = {}
+    shaped_reward = collections.OrderedDict()
 
     # Orientation component.
     angular_error = np.linalg.norm(

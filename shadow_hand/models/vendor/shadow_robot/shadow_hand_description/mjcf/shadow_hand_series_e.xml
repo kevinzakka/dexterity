@@ -1,38 +1,14 @@
 <mujoco>
     <compiler angle="radian" coordinate="local" meshdir="../meshes" />
 
-    <!-- These settings affect the quality of the rendering. In general, larger values
-        result in higher quality, but possibly slower speed.
-     -->
     <visual>
-        <!-- <map fogstart="3" fogend="5" force="0.1" znear="0.1"/> -->
-        <!-- <global offwidth="1280" offheight="720"/> -->
-        <!-- <quality shadowsize="2048"/> -->
+        <quality shadowsize="4096"/>
     </visual>
 
-    <!-- Need to tune this:
-        timestep: Simulation timestep in seconds. Default is 0.002.
-        iterations: Max no. of iterations for the constraint solver. Default is 100.
-        impratio: Ratio of frictional-to-normal constraint impedance. Values greater
-            than 1 cause friction forces to be harder than normal forces, i.e. prevent
-            slip without increasing the actual friction coefficient. Default is 1.
-        apirate: Rate in Hz at which an external API allows the update function to be
-            executed. Used to simulate devices with limited communication bandwidth.
-            Only affects the socket API and not the physics simulation.
-     -->
-    <option timestep="0.002" impratio="1" iterations="20" apirate="200"/>
-
-    <!-- Need to tune this:
-        njmax: max no. of scalar constraints
-        nconmax: max no. of contacts
-        nstack: size of the pre-allocated stack. Default is -1, which means the compiler
-            uses a heuristic to set appropriate size.
-     -->
-    <size njmax="500" nconmax="200" nstack="600000"/>
+    <size njmax="500" nconmax="200"/>
 
     <asset>
         <material name="metal" reflectance="1.0" rgba="0.6 0.6 0.6 1.0" shininess="0.5" specular="1.0"/>
-        <!-- <material name="plastic" rgba="0.2 0.2 0.2 1.0" shininess="0.5"/> -->
         <material name="plastic" specular="0.75" shininess=".1" reflectance="0.5" rgba=".15 .15 .15 1"/>
         <material name="rubber" rgba="0.3 0.3 0.3 1.0" shininess="0.0"/>
 
@@ -248,48 +224,31 @@
 
     <default>
         <mesh scale="0.001 0.001 0.001"/>
-
-        <!-- Default joint parameters:
-            limited: Whether the joint has limits. By default false.
-            damping: Joint damping applied to all degrees of freedom created by the
-                joint.
-            armature: Rotor inertia, added to the diagonal of inertia matrix.
-            margin: The distance threshold below which limits become active. Useful for
-                modeling soft joint limits.
-            frictionloss: Friction loss due to dry friction.
-            range: The joint limits. By default (0, 0).
-         -->
         <joint limited="true" damping="0.1" armature="0.005" margin="0.0" frictionloss="0.1"/>
-        <!-- Above values are taken from sr_common -->
-
-        <default class="collision">
-            <geom group="3"/>
-        </default>
+        <general ctrllimited="true" ctrlrange="-1 1" /> -->
 
         <default class="visual">
             <geom contype="0" conaffinity="0" group="0"/>
         </default>
+        <default class="collision">
+            <geom group="3"/>
+        </default>
 
         <default class="finger">
-            <!-- <joint axis="1 0 0" range="0 1.5708"/> -->
             <joint axis="1 0 0" range="0.000000 1.570796"/>
             <default class="FJ3">
-                <!-- <joint range="-0.349066 0.349066"/> -->
                 <joint range="-0.349066 0.349066" />
             </default>
             <default class="FJ2">
-                <joint />
             </default>
             <default class="FJ1">
-                <joint />
             </default>
             <default class="FJ0">
-                <joint />
             </default>
         </default>
 
         <default class="thumb">
-            <joint frictionloss="0.001" damping="0.2"/>
+            <joint frictionloss="0.001" damping="0.05"/>
             <default class="THJ4"/>
             <default class="THJ3"/>
             <default class="THJ2"/>
@@ -297,9 +256,6 @@
             <default class="THJ0"/>
         </default>
     </default>
-
-    <!-- Uncomment these lines if loading into the MuJoCo viewer. -->
-    <!-- <include file="shadow_hand_position_actuators.xml"/> -->
 
     <worldbody>
         <body name="forearm">
@@ -728,31 +684,4 @@
         <exclude body1="thproximal" body2="thmiddle" />
         <exclude body1="thmiddle" body2="thdistal" />
     </contact>
-
-    <!-- <sensor>
-        <torque name="WRJ1_torque" site="WRJ1_site"/>
-        <torque name="WRJ0_torque" site="WRJ0_site"/>
-        <torque name="FFJ3_torque" site="FFJ3_site"/>
-        <torque name="FFJ2_torque" site="FFJ2_site"/>
-        <torque name="FFJ1_torque" site="FFJ1_site"/>
-        <torque name="FFJ0_torque" site="FFJ0_site"/>
-        <torque name="MFJ3_torque" site="MFJ3_site"/>
-        <torque name="MFJ2_torque" site="MFJ2_site"/>
-        <torque name="MFJ1_torque" site="MFJ1_site"/>
-        <torque name="MFJ0_torque" site="MFJ0_site"/>
-        <torque name="RFJ3_torque" site="RFJ3_site"/>
-        <torque name="RFJ2_torque" site="RFJ2_site"/>
-        <torque name="RFJ1_torque" site="RFJ1_site"/>
-        <torque name="RFJ0_torque" site="RFJ0_site"/>
-        <torque name="LFJ4_torque" site="LFJ4_site"/>
-        <torque name="LFJ3_torque" site="LFJ3_site"/>
-        <torque name="LFJ2_torque" site="LFJ2_site"/>
-        <torque name="LFJ1_torque" site="LFJ1_site"/>
-        <torque name="LFJ0_torque" site="LFJ0_site"/>
-        <torque name="THJ4_torque" site="THJ4_site"/>
-        <torque name="THJ3_torque" site="THJ3_site"/>
-        <torque name="THJ2_torque" site="THJ2_site"/>
-        <torque name="THJ1_torque" site="THJ1_site"/>
-        <torque name="THJ0_torque" site="THJ0_site"/>
-    </sensor> -->
 </mujoco>

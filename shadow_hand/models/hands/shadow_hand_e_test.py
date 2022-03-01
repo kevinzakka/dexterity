@@ -15,37 +15,36 @@ class ShadowHandEConstantsTest(absltest.TestCase):
         np.testing.assert_array_equal(actual, expected)
 
 
-@parameterized.named_parameters(
-    {
-        "testcase_name": "position_control",
-        "actuation": consts.Actuation.POSITION,
-    },
-)
 class ShadowHandSeriesETest(parameterized.TestCase):
-    def test_can_compile_and_step_model(self, actuation: consts.Actuation) -> None:
-        hand = shadow_hand_e.ShadowHandSeriesE(actuation=actuation)
+    def test_can_compile_and_step_model(self) -> None:
+        hand = shadow_hand_e.ShadowHandSeriesE()
         physics = mjcf.Physics.from_mjcf_model(hand.mjcf_model)
-        physics.step()
+        for _ in range(100):
+            physics.step()
 
-    def test_joints(self, actuation: consts.Actuation) -> None:
-        hand = shadow_hand_e.ShadowHandSeriesE(actuation=actuation)
+    def test_set_name(self) -> None:
+        name = "hand_of_glory"
+        hand = shadow_hand_e.ShadowHandSeriesE(name=name)
+        self.assertEqual(hand.mjcf_model.model, name)
+
+    def test_joints(self) -> None:
+        hand = shadow_hand_e.ShadowHandSeriesE()
         self.assertLen(hand.joints, consts.NUM_JOINTS)
         for joint in hand.joints:
             self.assertEqual(joint.tag, "joint")
 
-    def test_actuators(self, actuation: consts.Actuation) -> None:
-        hand = shadow_hand_e.ShadowHandSeriesE(actuation=actuation)
+    def test_actuators(self) -> None:
+        hand = shadow_hand_e.ShadowHandSeriesE()
         self.assertLen(hand.actuators, consts.NUM_ACTUATORS)
         for actuator in hand.actuators:
-            if actuation == consts.Actuation.POSITION:
-                self.assertEqual(actuator.tag, "position")
+            self.assertEqual(actuator.tag, "general")
 
-    def test_mjcf_model(self, actuation: consts.Actuation) -> None:
-        hand = shadow_hand_e.ShadowHandSeriesE(actuation=actuation)
+    def test_mjcf_model(self) -> None:
+        hand = shadow_hand_e.ShadowHandSeriesE()
         self.assertIsInstance(hand.mjcf_model, mjcf.RootElement)
 
-    def test_control_to_joint_pos(self, actuation: consts.Actuation) -> None:
-        hand = shadow_hand_e.ShadowHandSeriesE(actuation=actuation)
+    def test_control_to_joint_pos(self) -> None:
+        hand = shadow_hand_e.ShadowHandSeriesE()
 
         # Randomly generate a control for the hand.
         wr_ctrl = np.random.randn(2)
@@ -89,14 +88,14 @@ class ShadowHandSeriesETest(parameterized.TestCase):
         np.testing.assert_array_equal(actual, expected)
         self.assertEqual(actual.shape, (consts.NUM_JOINTS,))
 
-    def test_raises_when_control_wrong_len(self, actuation: consts.Actuation) -> None:
-        hand = shadow_hand_e.ShadowHandSeriesE(actuation=actuation)
+    def test_raises_when_control_wrong_len(self) -> None:
+        hand = shadow_hand_e.ShadowHandSeriesE()
         control = np.array([0.0])
         with self.assertRaises(ValueError):
             hand.control_to_joint_positions(control)
 
-    def test_joint_pos_to_control(self, actuation: consts.Actuation) -> None:
-        hand = shadow_hand_e.ShadowHandSeriesE(actuation=actuation)
+    def test_joint_pos_to_control(self) -> None:
+        hand = shadow_hand_e.ShadowHandSeriesE()
 
         # Randomly generate joint positions for the hand.
         wr_qpos = np.random.randn(2)
@@ -139,8 +138,8 @@ class ShadowHandSeriesETest(parameterized.TestCase):
         np.testing.assert_array_equal(actual, expected)
         self.assertEqual(actual.shape, (consts.NUM_ACTUATORS,))
 
-    def test_raises_when_qpos_wrong_len(self, actuation: consts.Actuation) -> None:
-        hand = shadow_hand_e.ShadowHandSeriesE(actuation=actuation)
+    def test_raises_when_qpos_wrong_len(self) -> None:
+        hand = shadow_hand_e.ShadowHandSeriesE()
         qpos = np.array([0.0])
         with self.assertRaises(ValueError):
             hand.joint_positions_to_control(qpos)

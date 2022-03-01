@@ -204,52 +204,6 @@ ACTUATOR_GROUP: Dict[Components, Tuple[Actuators, ...]] = {
     ),
 }
 
-
-# Note: It seems there's a discrepancy between the values reported in the spec sheet^[1]
-# and the values reported in the company's github repo^[2]. I'm going to follow the ones
-# on the spec sheet, since it seems those are the ones OpenAI^[3] used for their project
-# as well.
-# References:
-#   [1]: Shadow Robot spec sheet: https://www.shadowrobot.com/wp-content/uploads/shadow_dexterous_hand_technical_specification_E_20190221.pdf
-#   [2]: Shadow Robot Company code: github.com/shadow-robot/sr_common
-#   [3]: OpenAI code: github.com/openai/robogym
-#
-# A mapping from `Actuators` to the corresponding control range, in radians.
-ACTUATOR_CTRLRANGE: Dict[Actuators, Tuple[float, float]] = {
-    # Wrist.
-    Actuators.A_WRJ1: (
-        rad(-28),
-        rad(8),
-    ),  # (-0.4886921905584123, 0.13962634015954636)
-    Actuators.A_WRJ0: (
-        rad(-40),
-        rad(28),
-    ),  # (-0.6981317007977318, 0.4886921905584123)
-    # First finger.
-    Actuators.A_FFJ3: (rad(-20), rad(20)),
-    Actuators.A_FFJ2: (rad(0), rad(90)),
-    Actuators.A_FFJ1: (rad(0), rad(180)),
-    # Middle finger.
-    Actuators.A_MFJ3: (rad(-20), rad(20)),
-    Actuators.A_MFJ2: (rad(0), rad(90)),
-    Actuators.A_MFJ1: (rad(0), rad(180)),
-    # Ring finger.
-    Actuators.A_RFJ3: (rad(-20), rad(20)),
-    Actuators.A_RFJ2: (rad(0), rad(90)),
-    Actuators.A_RFJ1: (rad(0), rad(180)),
-    # Little finger.
-    Actuators.A_LFJ4: (rad(0), rad(45)),
-    Actuators.A_LFJ3: (rad(-20), rad(20)),
-    Actuators.A_LFJ2: (rad(0), rad(90)),
-    Actuators.A_LFJ1: (rad(0), rad(180)),
-    # Thumb.
-    Actuators.A_THJ4: (rad(-60), rad(60)),
-    Actuators.A_THJ3: (rad(0), rad(70)),
-    Actuators.A_THJ2: (rad(-12), rad(12)),
-    Actuators.A_THJ1: (rad(-30), rad(30)),
-    Actuators.A_THJ0: (rad(0), rad(90)),  # OpenAI uses (-90, 0) here. Why?
-}
-
 # One-to-many mapping from `Actuators` to the joint(s) it controls.
 # The first two joints of each of the main fingers are coupled, which means there is
 # only one actuator controlling them via a single tendon.
@@ -285,6 +239,71 @@ ACTUATOR_JOINT_MAPPING: Dict[Actuators, Tuple[Joints, ...]] = {
 # Reverse mapping of `ACTUATOR_JOINT_MAPPING`.
 JOINT_ACTUATOR_MAPPING: Dict[Joints, Actuators] = {
     v: k for k, vs in ACTUATOR_JOINT_MAPPING.items() for v in vs
+}
+
+
+def _compute_projection_matrices() -> Tuple[np.ndarray, np.ndarray]:
+    position_to_control = np.zeros((NUM_ACTUATORS, NUM_JOINTS))
+    control_to_position = np.zeros((NUM_JOINTS, NUM_ACTUATORS))
+    actuator_ids = dict(zip(Actuators, range(NUM_ACTUATORS)))
+    joint_ids = dict(zip(Joints, range(NUM_JOINTS)))
+    for actuator, joints in ACTUATOR_JOINT_MAPPING.items():
+        value = 1.0 / len(joints)
+        a_id = actuator_ids[actuator]
+        j_ids = np.array([joint_ids[joint] for joint in joints])
+        position_to_control[a_id, j_ids] = 1.0
+        control_to_position[j_ids, a_id] = value
+    return position_to_control, control_to_position
+
+
+# Projection matrices for mapping control space to joint space and vice versa. These
+# matrices should premultiply the vector to be projected.
+# POSITION_TO_CONTROL maps a control vector to a joint vector.
+# CONTROL_TO_POSITION maps a joint vector to a control vector.
+POSITION_TO_CONTROL, CONTROL_TO_POSITION = _compute_projection_matrices()
+
+# ====================== #
+# Limits
+# ====================== #
+
+# Note: It seems there's a discrepancy between the values reported in the spec sheet^[1]
+# and the values reported in the company's github repo^[2]. I'm going to follow the ones
+# on the spec sheet, since it seems those are the ones OpenAI^[3] used for their project
+# as well.
+# References:
+#   [1]: Shadow Robot spec sheet: https://www.shadowrobot.com/wp-content/uploads/shadow_dexterous_hand_technical_specification_E_20190221.pdf
+#   [2]: Shadow Robot Company code: github.com/shadow-robot/sr_common
+#   [3]: OpenAI code: github.com/openai/robogym
+#
+# A mapping from `Actuators` to the corresponding control range, in radians.
+ACTUATOR_CTRLRANGE: Dict[Actuators, Tuple[float, float]] = {
+    # Wrist.
+    Actuators.A_WRJ1: (rad(-28), rad(8)),  # (-0.4886921905584123, 0.13962634015954636)
+    Actuators.A_WRJ0: (rad(-40), rad(28)),  # (-0.6981317007977318, 0.4886921905584123)
+    # First finger.
+    Actuators.A_FFJ3: (rad(-20), rad(20)),
+    Actuators.A_FFJ2: (rad(0), rad(90)),
+    Actuators.A_FFJ1: (rad(0), rad(180)),
+    # Middle finger.
+    Actuators.A_MFJ3: (rad(-20), rad(20)),
+    Actuators.A_MFJ2: (rad(0), rad(90)),
+    Actuators.A_MFJ1: (rad(0), rad(180)),
+    # Ring finger.
+    Actuators.A_RFJ3: (rad(-20), rad(20)),
+    Actuators.A_RFJ2: (rad(0), rad(90)),
+    Actuators.A_RFJ1: (rad(0), rad(180)),
+    # Little finger.
+    Actuators.A_LFJ4: (rad(0), rad(45)),
+    Actuators.A_LFJ3: (rad(-20), rad(20)),
+    Actuators.A_LFJ2: (rad(0), rad(90)),
+    Actuators.A_LFJ1: (rad(0), rad(180)),
+    # Thumb.
+    Actuators.A_THJ4: (rad(-60), rad(60)),
+    Actuators.A_THJ3: (rad(0), rad(70)),
+    Actuators.A_THJ2: (rad(-12), rad(12)),
+    Actuators.A_THJ1: (rad(-30), rad(30)),
+    # OpenAI uses (-90, 0) here. Why?
+    Actuators.A_THJ0: (rad(0), rad(90)),
 }
 
 # Joint position limits, in radians.
@@ -366,29 +385,9 @@ VELOCITY_LIMITS: Dict[Actuators, Tuple[float, float]] = {
 
 # Actuation limits of the hand.
 ACTUATION_LIMITS: Dict[Actuation, Dict[Actuators, Tuple[float, float]]] = {
+    # For position control, actuation limits are joint limits.
     Actuation.POSITION: ACTUATOR_CTRLRANGE,
 }
-
-
-def _compute_projection_matrices() -> Tuple[np.ndarray, np.ndarray]:
-    position_to_control = np.zeros((NUM_ACTUATORS, NUM_JOINTS))
-    control_to_position = np.zeros((NUM_JOINTS, NUM_ACTUATORS))
-    actuator_ids = dict(zip(Actuators, range(NUM_ACTUATORS)))
-    joint_ids = dict(zip(Joints, range(NUM_JOINTS)))
-    for actuator, joints in ACTUATOR_JOINT_MAPPING.items():
-        value = 1.0 / len(joints)
-        a_id = actuator_ids[actuator]
-        j_ids = np.array([joint_ids[joint] for joint in joints])
-        position_to_control[a_id, j_ids] = 1.0
-        control_to_position[j_ids, a_id] = value
-    return position_to_control, control_to_position
-
-
-# Projection matrices for mapping control space to joint space and vice versa. These
-# matrices should premultiply the vector to be projected.
-# POSITION_TO_CONTROL maps a control vector to a joint vector.
-# CONTROL_TO_POSITION maps a joint vector to a control vector.
-POSITION_TO_CONTROL, CONTROL_TO_POSITION = _compute_projection_matrices()
 
 # ====================== #
 # Tendon constants
@@ -483,8 +482,3 @@ COLORED_GEOMS: Tuple[str, ...] = (
     "thmiddle",
     "thdistal",
 )
-
-
-if __name__ == "__main__":
-    for k, v in ACTUATOR_CTRLRANGE.items():
-        print(f"{k} -> {v}")
