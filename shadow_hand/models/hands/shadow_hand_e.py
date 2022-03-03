@@ -223,8 +223,7 @@ class ShadowHandSeriesE(fingered_hand.FingeredHand):
                 size="0.001 0.001 0.001",
                 type="sphere",
                 rgba="1 0 0 1",
-                # TODO(kevin): Do I need this here?
-                # group=composer.SENSOR_SITES_GROUP,
+                group=composer.SENSOR_SITES_GROUP,
             )
             self._fingertip_sites.append(tip_site)
             self._fingertip_site_elem_mapping[finger] = tip_site

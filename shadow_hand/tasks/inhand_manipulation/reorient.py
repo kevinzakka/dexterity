@@ -107,7 +107,7 @@ class ReOrient(task.Task):
         Args:
             arena: The arena to use.
             hand: The hand to use.
-            hand_effector:
+            hand_effector: The effector to use for the hand.
             obs_settings: The observation settings to use.
             workspace: The workspace to use.
             restrict_orientation: If True, the goal orientation is restricted about the
@@ -198,16 +198,12 @@ class ReOrient(task.Task):
         self._discount = 1.0
 
     @property
-    def task_observables(self) -> collections.OrderedDict:
+    def task_observables(self) -> Dict[str, observable.Observable]:
         return self._task_observables
 
     @property
     def root_entity(self) -> composer.Entity:
         return self._arena
-
-    @property
-    def hand(self) -> composer.Entity:
-        return self._hand
 
     def initialize_episode(
         self, physics: mjcf.Physics, random_state: np.random.RandomState

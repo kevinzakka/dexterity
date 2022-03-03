@@ -292,7 +292,8 @@ ACTUATOR_CTRLRANGE: Dict[Actuators, Tuple[float, float]] = {
     Actuators.A_THJ2: (rad(-12), rad(12)),
     Actuators.A_THJ1: (rad(-30), rad(30)),
     # OpenAI uses (-90, 0) here. Why?
-    Actuators.A_THJ0: (rad(0), rad(90)),
+    # Actuators.A_THJ0: (rad(0), rad(90)),
+    Actuators.A_THJ0: (rad(-90), rad(0)),
 }
 
 # Joint position limits, in radians.

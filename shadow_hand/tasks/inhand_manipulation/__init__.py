@@ -4,6 +4,7 @@ from typing import Optional, Tuple
 
 from dm_control import composer as _composer
 
+from shadow_hand.tasks.inhand_manipulation import reach as _reach
 from shadow_hand.tasks.inhand_manipulation import reorient as _reorient
 from shadow_hand.tasks.inhand_manipulation.shared import registry as _registry
 from shadow_hand.utils import mujoco_collisions
