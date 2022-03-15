@@ -7,7 +7,7 @@ from absl import app
 from absl import flags
 from dm_control import mjcf
 from dm_control import mujoco
-from dm_control.mujoco.wrapper.mjbindings import enums
+from dm_control.mujoco import wrapper
 from dm_robotics.transformations import transformations as tr
 from matplotlib import pyplot as plt
 
@@ -30,8 +30,8 @@ def render_scene(
     transparent: bool = False,
     cam_id: str = cameras.FRONT_CLOSE.name,
 ) -> np.ndarray:
-    scene_option = mujoco.wrapper.core.MjvOption()
-    scene_option.flags[enums.mjtVisFlag.mjVIS_TRANSPARENT] = transparent
+    scene_option = wrapper.core.MjvOption()
+    scene_option.flags[mujoco.mjtVisFlag.mjVIS_TRANSPARENT] = transparent
     return physics.render(
         width=640,
         height=480,

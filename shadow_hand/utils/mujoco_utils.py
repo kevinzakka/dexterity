@@ -1,14 +1,11 @@
 from typing import List, Sequence
 
+import mujoco
 import numpy as np
 from dm_control import mjcf
-from dm_control.mujoco.wrapper import mjbindings
 from dm_robotics.transformations import transformations as tr
 
 from shadow_hand import hints
-
-mjlib = mjbindings.mjlib
-enums = mjbindings.enums
 
 
 def prefix_identifier(identifier: str, prefix: str) -> str:
@@ -72,12 +69,12 @@ def get_site_velocity(
         world_frame: Whether to return the velocity in the world frame.
     """
     flg_local = 0 if world_frame else 1
-    idx = physics.model.name2id(site_elem.full_identifier, enums.mjtObj.mjOBJ_SITE)
+    idx = physics.model.name2id(site_elem.full_identifier, mujoco.mjtObj.mjOBJ_SITE)
     site_vel = np.empty(6)
-    mjlib.mj_objectVelocity(
+    mujoco.mj_objectVelocity(
         physics.model.ptr,
         physics.data.ptr,
-        enums.mjtObj.mjOBJ_SITE,
+        mujoco.mjtObj.mjOBJ_SITE,
         idx,
         site_vel,
         flg_local,
@@ -95,13 +92,13 @@ def get_joint_dof_size(model: hints.MjModel, joint_id: int) -> int:
 
     joint_type = model.jnt_type[joint_id]
 
-    if joint_type == enums.mjtJoint.mjJNT_SLIDE:
+    if joint_type == mujoco.mjtJoint.mjJNT_SLIDE:
         return 1
-    elif joint_type == enums.mjtJoint.mjJNT_HINGE:
+    elif joint_type == mujoco.mjtJoint.mjJNT_HINGE:
         return 1
-    elif joint_type == enums.mjtJoint.mjJNT_BALL:
+    elif joint_type == mujoco.mjtJoint.mjJNT_BALL:
         return 3
-    elif joint_type == enums.mjtJoint.mjJNT_FREE:
+    elif joint_type == mujoco.mjtJoint.mjJNT_FREE:
         return 6
     else:  # Not supported.
         return -1
@@ -121,7 +118,7 @@ def joint_ids_to_dof_ids(model: hints.MjModel, joint_ids: Sequence[int]) -> List
 def compute_object_6d_jacobian(
     model: hints.MjModel,
     data: hints.MjData,
-    object_type: mjbindings.enums.mjtObj,
+    object_type: hints.MujocoObjectType,
     object_id: int,
 ) -> np.ndarray:
     """Computes the (6, nv) object Jacobian.
@@ -135,12 +132,12 @@ def compute_object_6d_jacobian(
     jacobian = np.empty((6, model.nv), dtype=data.qpos.dtype)
     jacobian_position, jacobian_rotation = jacobian[:3], jacobian[3:]
 
-    if object_type == mjbindings.enums.mjtObj.mjOBJ_BODY:
-        func = mjlib.mj_jacBody
-    elif object_type == mjbindings.enums.mjtObj.mjOBJ_GEOM:
-        func = mjlib.mj_jacGeom
-    elif object_type == mjbindings.enums.mjtObj.mjOBJ_SITE:
-        func = mjlib.mj_jacSite
+    if object_type == mujoco.mjtObj.mjOBJ_BODY:
+        func = mujoco.mj_jacBody
+    elif object_type == mujoco.mjtObj.mjOBJ_GEOM:
+        func = mujoco.mj_jacGeom
+    elif object_type == mujoco.mjtObj.mjOBJ_SITE:
+        func = mujoco.mj_jacSite
     else:
         raise ValueError(
             f"Invalid `object_type` {object_type}. Only bodies, geoms and sites"
@@ -158,13 +155,13 @@ def compute_object_6d_jacobian(
     return jacobian
 
 
-def get_element_type(element: hints.MjcfElement) -> mjbindings.enums.mjtObj:
+def get_element_type(element: hints.MjcfElement) -> mujoco.mjtObj:
     if element.tag == "body":
-        return mjbindings.enums.mjtObj.mjOBJ_BODY
+        return mujoco.mjtObj.mjOBJ_BODY
     elif element.tag == "geom":
-        return mjbindings.enums.mjtObj.mjOBJ_GEOM
+        return mujoco.mjtObj.mjOBJ_GEOM
     elif element.tag == "site":
-        return mjbindings.enums.mjtObj.mjOBJ_SITE
+        return mujoco.mjtObj.mjOBJ_SITE
     else:
         raise ValueError(
             f"Element must be a MuJoCo body, geom or site. Got [{element.tag}]."

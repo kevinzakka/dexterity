@@ -4,13 +4,10 @@ import abc
 import dataclasses
 from typing import Optional, Sequence
 
+import mujoco
 import numpy as np
-from dm_control.mujoco.wrapper import mjbindings
 
 from shadow_hand import hints
-
-mjlib = mjbindings.mjlib
-enums = mjbindings.enums
 
 
 class CartesianVelocitytoJointVelocityMapper(abc.ABC):
@@ -61,10 +58,12 @@ class Parameters:
         """Validates the parameters."""
 
         for object_type in self.object_types:
+            print(f"Validating object_type: {object_type}")
+
             if object_type not in [
-                enums.mjtObj.mjOBJ_BODY,
-                enums.mjtObj.mjOBJ_GEOM,
-                enums.mjtObj.mjOBJ_SITE,
+                mujoco.mjtObj.mjOBJ_BODY,
+                mujoco.mjtObj.mjOBJ_GEOM,
+                mujoco.mjtObj.mjOBJ_SITE,
             ]:
                 raise ValueError(
                     f"Objects of type {object_type} are not supported. Only"

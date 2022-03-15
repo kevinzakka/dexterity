@@ -6,6 +6,7 @@ A suite of tools for simulating the [Shadow Hand](https://www.shadowrobot.com/) 
 
 **Core**
 
+- [x] Upgrade to native MuJoCo python bindings.
 - [x] Add torque sensors and fingertip sites.
 - [x] Implement inverse kinematics.
     - [x] Implement basic pseudoinverse `CartesianVelocitytoJointVelocityMapper`.

@@ -2,18 +2,16 @@ import copy
 import dataclasses
 from typing import Mapping, Optional, Sequence
 
+import mujoco
 import numpy as np
 from absl import logging
 from dm_control import mjcf
-from dm_control.mujoco.wrapper import mjbindings
 from dm_robotics.geometry import geometry
 from dm_robotics.geometry import mujoco_physics
 
 from shadow_hand import controllers
 from shadow_hand.models.hands import shadow_hand_e_constants as consts
 from shadow_hand.utils import mujoco_utils
-
-mjlib = mjbindings.mjlib
 
 # Gain for the linear twist computation, should always be between 0 and 1.
 # 0 corresponds to not moving and 1 corresponds to moving to the target in a single
@@ -225,7 +223,7 @@ class IKSolver:
 
             qdot_sol = self._compute_joint_velocities(twists)
 
-            mjbindings.mjlib.mj_integratePos(
+            mujoco.mj_integratePos(
                 self._physics.model.ptr,
                 self._physics.data.qpos,
                 qdot_sol,
@@ -290,9 +288,9 @@ class IKSolver:
         self._all_joints_binding.qpos[:] = qpos
 
         # Forward kinematics to update the pose of the tracked site.
-        mjlib.mj_normalizeQuat(self._physics.model.ptr, self._physics.data.qpos)
-        mjlib.mj_kinematics(self._physics.model.ptr, self._physics.data.ptr)
-        mjlib.mj_comPos(self._physics.model.ptr, self._physics.data.ptr)
+        mujoco.mj_normalizeQuat(self._physics.model.ptr, self._physics.data.qpos)
+        mujoco.mj_kinematics(self._physics.model.ptr, self._physics.data.ptr)
+        mujoco.mj_comPos(self._physics.model.ptr, self._physics.data.ptr)
 
 
 def _compute_twist(

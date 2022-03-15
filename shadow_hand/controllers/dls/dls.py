@@ -2,14 +2,10 @@ import dataclasses
 from typing import Optional, Sequence
 
 import numpy as np
-from dm_control.mujoco.wrapper import mjbindings
 
 from shadow_hand import hints
 from shadow_hand.controllers import mapper
 from shadow_hand.utils import mujoco_utils
-
-mjlib = mjbindings.mjlib
-enums = mjbindings.enums
 
 
 @dataclasses.dataclass

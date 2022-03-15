@@ -5,7 +5,8 @@ core_requirements = [
     "absl-py",
     "numpy",
     "typing_extensions",
-    "dm_control @ git+git://github.com/deepmind/dm_control.git",
+    "mujoco",
+    "dm_control",
     "dm_robotics-geometry",
     "dm_robotics-transformations",
 ]
