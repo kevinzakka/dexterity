@@ -52,7 +52,7 @@ _DISTANCE_TO_TARGET_THRESHOLD = 0.01  # 1cm.
 _THRESHOLD_COLOR = (0.0, 1.0, 0.0)  # Green.
 
 # Timestep of the physics simulation.
-_PHYSICS_TIMESTEP: float = 0.002
+_PHYSICS_TIMESTEP: float = 0.02
 
 # Interval between agent actions, in seconds.
 # We send a control signal every (_CONTROL_TIMESTEP / _PHYSICS_TIMESTEP) physics steps.
@@ -64,6 +64,9 @@ _MAX_SOLVES: int = 25
 # The maximum allowed time for reaching the current target, in seconds.
 _MAX_STEPS_SINGLE_SOLVE: int = 50
 _MAX_TIME_SINGLE_SOLVE: float = _MAX_STEPS_SINGLE_SOLVE * _CONTROL_TIMESTEP
+
+# How much to increase the contact distance threshold by, in meters.
+_GEOM_MARGIN_OFFSET: float = 0.002  # 2 mm.
 
 SUITE = containers.TaggedTasks()
 
@@ -170,6 +173,17 @@ class Reach(task.Task):
         self, physics: mjcf.Physics, random_state: np.random.RandomState
     ) -> None:
         super().initialize_episode(physics, random_state)
+
+        physics.model.geom_margin[:] += _GEOM_MARGIN_OFFSET
+
+        # Set the initial joint configuration to the midrange of the joint limits.
+        midrange = physics.bind(self.hand.joints).range.mean(axis=1)
+        physics.bind(self.hand.joints).qpos[:] = midrange
+
+        # Step the physics to move the fingers out of the way. Typically the pinky tends
+        # to collide with the ring finger in this configuration.
+        for _ in range(round(0.03 / _PHYSICS_TIMESTEP)):
+            physics.step()
 
         # Sample a new goal position for each fingertip.
         self._fingertips_initializer(physics, random_state)
