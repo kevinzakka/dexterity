@@ -98,12 +98,11 @@ class FingertipPositionPlacer(composer.Initializer):
 
             if self._ignore_self_collisions or not self._has_self_collisions(physics):
                 ctrl_desired = self._hand.joint_positions_to_control(qpos_desired)
+                actuator_binding.ctrl[:] = ctrl_desired
 
                 # Take a few steps to avoid goals that are impossible due to contact.
-                hand_isolator = utils.JointStaticIsolator(physics, self._hand.joints)
-                for _ in range(2):
-                    actuator_binding.ctrl[:] = ctrl_desired
-                    with hand_isolator:
+                with utils.JointStaticIsolator(physics, self._hand.joints):
+                    for _ in range(2):
                         physics.step()
 
                 qpos_desired = joint_binding.qpos.copy()
