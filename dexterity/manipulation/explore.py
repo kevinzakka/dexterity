@@ -50,6 +50,8 @@ def main(_) -> None:
     )
 
     if FLAGS.action_noise > 0.0:
+        # By default, the viewer will apply the midpoint action since the action spec is
+        # bounded. So this wrapper will add noise centered around this midpoint.
         env = ActionNoise(env, scale=FLAGS.action_noise)
 
     # Print entity and task observables.
