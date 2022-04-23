@@ -46,16 +46,19 @@ _STEPS_BEFORE_MOVING_TARGET: int = 5
 
 # Threshold for the distance between a finger and its target below which we consider the
 # target reached, in meters.
+# Note: OpenAI uses a threshold of 0.025.
 _DISTANCE_TO_TARGET_THRESHOLD = 0.01  # 1cm.
 
 # Assign this color to the finger geoms if the finger is within the target threshold.
 _THRESHOLD_COLOR = (0.0, 1.0, 0.0)  # Green.
 
 # Timestep of the physics simulation.
+# OpenAI uses a timestep of 0.002.
 _PHYSICS_TIMESTEP: float = 0.02
 
 # Interval between agent actions, in seconds.
 # We send a control signal every (_CONTROL_TIMESTEP / _PHYSICS_TIMESTEP) physics steps.
+# OpeAI uses a control timestep that is 10x the physics timestep.
 _CONTROL_TIMESTEP: float = 0.02  # 50 Hz.
 
 # The maximum number of consecutive solves until the task is terminated.
@@ -64,9 +67,6 @@ _MAX_SOLVES: int = 25
 # The maximum allowed time for reaching the current target, in seconds.
 _MAX_STEPS_SINGLE_SOLVE: int = 50
 _MAX_TIME_SINGLE_SOLVE: float = _MAX_STEPS_SINGLE_SOLVE * _CONTROL_TIMESTEP
-
-# How much to increase the contact distance threshold by, in meters.
-_GEOM_MARGIN_OFFSET: float = 0.002  # 2 mm.
 
 SUITE = containers.TaggedTasks()
 
@@ -174,15 +174,13 @@ class Reach(task.Task):
     ) -> None:
         super().initialize_episode(physics, random_state)
 
-        physics.model.geom_margin[:] += _GEOM_MARGIN_OFFSET
-
         # Set the initial joint configuration to the midrange of the joint limits.
         midrange = physics.bind(self.hand.joints).range.mean(axis=1)
         physics.bind(self.hand.joints).qpos[:] = midrange
 
-        # Step the physics to move the fingers out of the way. Typically the pinky tends
-        # to collide with the ring finger in this configuration.
-        for _ in range(round(0.03 / _PHYSICS_TIMESTEP)):
+        # Step the physics to move the fingers out of the way. Typically the pinky
+        # collides with the ring finger in this configuration.
+        for _ in range(2):
             physics.step()
 
         # Sample a new goal position for each fingertip.
