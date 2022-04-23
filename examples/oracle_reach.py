@@ -16,6 +16,7 @@ _REACH_TASKS = manipulation.TASKS_BY_DOMAIN[_DOMAIN]
 flags.DEFINE_enum("task_name", "state_dense", _REACH_TASKS, "Which reach task to load.")
 flags.DEFINE_integer("seed", None, "RNG seed.")
 flags.DEFINE_integer("num_episodes", 1, "Number of episodes to run.")
+flags.DEFINE_boolean("render", False, "Whether to render the episode and save to disk.")
 
 FLAGS = flags.FLAGS
 
@@ -37,11 +38,12 @@ def main(_) -> None:
         return ctrl
 
     render_kwargs = dict(height=480, width=640, camera_id=0)
+    frames = []
 
     for _ in range(FLAGS.num_episodes):
-        frames = []
         timestep = env.reset()
-        frames.append(env.physics.render(**render_kwargs))
+        if FLAGS.render:
+            frames.append(env.physics.render(**render_kwargs))
         actions = []
         num_steps = 0
         returns = 0.0
@@ -51,7 +53,8 @@ def main(_) -> None:
             action = oracle(timestep)
             actions.append(action)
             timestep = env.step(action)
-            frames.append(env.physics.render(**render_kwargs))
+            if FLAGS.render:
+                frames.append(env.physics.render(**render_kwargs))
             returns += timestep.reward
             rewards.append(timestep.reward)
             num_steps += 1
@@ -65,7 +68,8 @@ def main(_) -> None:
         print(f"Total reward: {returns}")
         print(f"Success rate: {env.task.total_solves}/{env.task.max_solves}")
 
-    imageio.mimsave("temp/oracle_reach.mp4", frames, fps=60, quality=8)
+    if FLAGS.render:
+        imageio.mimsave("temp/oracle_reach.mp4", frames, fps=60, quality=8)
 
 
 if __name__ == "__main__":

@@ -157,6 +157,13 @@ class Reach(task.Task):
         )
         self._task_observables["target_positions"] = target_positions_observable
 
+        # Variable initialization.
+        self._total_solves = 0
+        self._reward_step_counter = 0
+        self._registered_solve = False
+        self._exceeded_single_solve_time = False
+        self._solve_start_time = 0.0
+
     @property
     def task_observables(self) -> Dict[str, observable.Observable]:
         return self._task_observables
