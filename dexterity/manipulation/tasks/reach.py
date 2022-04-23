@@ -62,10 +62,10 @@ _PHYSICS_TIMESTEP: float = 0.02
 _CONTROL_TIMESTEP: float = 0.02  # 50 Hz.
 
 # The maximum number of consecutive solves until the task is terminated.
-_MAX_SOLVES: int = 25
+_MAX_SOLVES: int = 50
 
 # The maximum allowed time for reaching the current target, in seconds.
-_MAX_STEPS_SINGLE_SOLVE: int = 50
+_MAX_STEPS_SINGLE_SOLVE: int = 150
 _MAX_TIME_SINGLE_SOLVE: float = _MAX_STEPS_SINGLE_SOLVE * _CONTROL_TIMESTEP
 
 SUITE = containers.TaggedTasks()

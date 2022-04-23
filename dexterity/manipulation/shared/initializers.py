@@ -54,7 +54,9 @@ class FingertipPositionPlacer(composer.Initializer):
         self._ignore_self_collisions = ignore_self_collisions
         self._max_rejection_samples = max_rejection_samples
         self._scale = scale
-        self._qpos = None
+
+        self._qpos: Optional[np.ndarray] = None
+        self._reference_qpos: Optional[np.ndarray] = None
 
     def _has_self_collisions(self, physics: mjcf.Physics) -> bool:
         """Returns True if the hand is in a self-collision state."""
@@ -73,21 +75,25 @@ class FingertipPositionPlacer(composer.Initializer):
         joint_binding = physics.bind(self._hand.joints)
         actuator_binding = physics.bind(self._hand.actuators)
 
-        initial_qpos = joint_binding.qpos.copy()
-        initial_ctrl = actuator_binding.ctrl.copy()
-        fingertip_pos = None
-
         # Get joint limits and range.
         joint_limits = joint_binding.range
         joint_range = joint_limits[:, 1] - joint_limits[:, 0]
 
+        # Use the midrange of the joint angles as the reference configuration.
+        if self._reference_qpos is None:
+            self._reference_qpos = joint_limits.mean(axis=1)
+
         # Apply gravity compensation.
         mujoco_utils.compensate_gravity(physics, self._hand.mjcf_model.find_all("body"))
 
+        initial_qpos = joint_binding.qpos.copy()
+        initial_ctrl = actuator_binding.ctrl.copy()
+        fingertip_pos: Optional[np.ndarray] = None
+
         for _ in range(self._max_rejection_samples):
-            # Sample around the current configuration in joint space.
+            # Sample around the reference configuration in joint space.
             qpos_desired = random_state.normal(
-                loc=initial_qpos, scale=self._scale * joint_range
+                loc=self._reference_qpos, scale=self._scale * joint_range
             )
             np.clip(
                 qpos_desired, joint_limits[:, 0], joint_limits[:, 1], out=qpos_desired
@@ -96,15 +102,14 @@ class FingertipPositionPlacer(composer.Initializer):
             self._hand.set_joint_angles(physics, qpos_desired)
             physics.forward()
 
+            # Take a few steps to avoid goals that are impossible due to contact.
+            ctrl_desired = self._hand.joint_positions_to_control(qpos_desired)
+            actuator_binding.ctrl[:] = ctrl_desired
+            with utils.JointStaticIsolator(physics, self._hand.joints):
+                for _ in range(2):
+                    physics.step()
+
             if self._ignore_self_collisions or not self._has_self_collisions(physics):
-                ctrl_desired = self._hand.joint_positions_to_control(qpos_desired)
-                actuator_binding.ctrl[:] = ctrl_desired
-
-                # Take a few steps to avoid goals that are impossible due to contact.
-                with utils.JointStaticIsolator(physics, self._hand.joints):
-                    for _ in range(2):
-                        physics.step()
-
                 qpos_desired = joint_binding.qpos.copy()
                 fingertip_pos = physics.bind(self._hand.fingertip_sites).xpos.copy()
                 self._qpos = qpos_desired

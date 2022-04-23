@@ -31,7 +31,7 @@ def main(_) -> None:
 
     def oracle(timestep: dm_env.TimeStep) -> np.ndarray:
         del timestep  # Unused
-        qpos = env.task._fingertips_initializer.qpos.copy()
+        qpos = env.task._fingertips_initializer.qpos
         ctrl = env.task.hand.joint_positions_to_control(qpos)
         ctrl = ctrl.astype(action_spec.dtype)
         return ctrl
