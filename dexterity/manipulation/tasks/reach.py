@@ -154,8 +154,9 @@ class Reach(task.GoalTask):
         for _ in range(2):
             physics.step()
 
+        positions = self._goal.reshape(5, 3)
         for i, target in enumerate(self._targets):
-            physics.bind(target.site).pos = self._goal[i]
+            physics.bind(target.site).pos = positions[i]
 
         # Save initial finger colors.
         if self._visualize_reward:
@@ -177,8 +178,9 @@ class Reach(task.GoalTask):
         super().before_step(physics, action, random_state)
 
         if self._goal_changed:
+            positions = self._goal.reshape(5, 3)
             for i, target in enumerate(self._targets):
-                physics.bind(target.site).pos = self._goal[i]
+                physics.bind(target.site).pos = positions[i]
 
     def after_step(
         self, physics: mjcf.Physics, random_state: np.random.RandomState

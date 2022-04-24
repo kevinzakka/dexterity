@@ -2,6 +2,7 @@ import numpy as np
 from dm_control import mjcf
 from dm_control.composer.variation import rotations
 from dm_control.entities.props import primitive
+from dm_env import specs
 from dm_robotics.transformations import transformations as tr
 
 from dexterity import goal
@@ -18,6 +19,9 @@ class PropOrientation(goal.GoalGenerator):
         self._name = name
         self._prop = prop
         self._sampler = rotations.UniformQuaternion()
+
+    def goal_spec(self) -> specs.Array:
+        return specs.Array(shape=(4,), dtype=np.float64, name=self._name)
 
     def initialize_episode(
         self, physics: mjcf.Physics, random_state: np.random.RandomState

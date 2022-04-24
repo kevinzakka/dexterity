@@ -3,6 +3,7 @@ from typing import Optional
 import numpy as np
 from dm_control import mjcf
 from dm_control.composer.initializers import utils
+from dm_env import specs
 
 from dexterity import exception
 from dexterity import goal
@@ -36,6 +37,9 @@ class FingertipCartesianPosition(goal.GoalGenerator):
         self._qpos: Optional[np.ndarray] = None
         self._reference_qpos: Optional[np.ndarray] = None
 
+    def goal_spec(self) -> specs.Array:
+        return specs.Array(shape=(15,), dtype=np.float64)
+
     def _has_self_collisions(self, physics: mjcf.Physics) -> bool:
         """Returns True if the hand is in a self-collision state."""
         return mujoco_collisions.has_self_collision(physics, self._hand.name)
@@ -49,7 +53,7 @@ class FingertipCartesianPosition(goal.GoalGenerator):
         mujoco_utils.compensate_gravity(physics, self._hand.mjcf_model.find_all("body"))
 
     def current_state(self, physics: mjcf.Physics) -> np.ndarray:
-        return np.array(physics.bind(self._hand.fingertip_sites).xpos)
+        return np.array(physics.bind(self._hand.fingertip_sites).xpos).ravel()
 
     def next_goal(
         self, physics: mjcf.Physics, random_state: np.random.RandomState
@@ -106,7 +110,7 @@ class FingertipCartesianPosition(goal.GoalGenerator):
                 )
             )
         else:
-            return fingertip_pos
+            return fingertip_pos.ravel()
 
     def relative_goal(
         self, goal_state: np.ndarray, current_state: np.ndarray
@@ -116,7 +120,7 @@ class FingertipCartesianPosition(goal.GoalGenerator):
     def goal_distance(
         self, goal_state: np.ndarray, current_state: np.ndarray
     ) -> np.ndarray:
-        relative_goal = self.relative_goal(goal_state, current_state)
+        relative_goal = self.relative_goal(goal_state, current_state).reshape(-1, 3)
         return np.linalg.norm(relative_goal, axis=1)
 
     @property

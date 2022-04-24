@@ -2,10 +2,15 @@ import abc
 
 import numpy as np
 from dm_control import mjcf
+from dm_env import specs
 
 
 class GoalGenerator(abc.ABC):
     """Abstract base class for a goal generator."""
+
+    @abc.abstractmethod
+    def goal_spec(self) -> specs.Array:
+        ...
 
     @abc.abstractmethod
     def initialize_episode(
