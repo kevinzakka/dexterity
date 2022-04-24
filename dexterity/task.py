@@ -1,41 +1,15 @@
 import abc
 from collections import OrderedDict
-from typing import Callable, Optional
+from typing import Optional
 
 import numpy as np
 from dm_control import composer
 from dm_control import mjcf
-from dm_control.composer.observation import observable
 from dm_env import specs
 
 from dexterity import effector
 from dexterity import goal
 from dexterity.models.hands import dexterous_hand
-
-
-class GoalObservable(observable.Observable):
-    def __init__(
-        self,
-        raw_observation_callable: Callable[[mjcf.Physics], np.ndarray],
-        goal_spec: specs.Array,
-        update_interval=1,
-        buffer_size=None,
-        delay=None,
-        aggregator=None,
-        corruptor=None,
-    ) -> None:
-
-        self._raw_callable = raw_observation_callable
-        self._goal_spec = goal_spec
-
-        super().__init__(update_interval, buffer_size, delay, aggregator, corruptor)
-
-    @property
-    def array_spec(self) -> specs.Array:
-        return self._goal_spec
-
-    def _callable(self, physics: mjcf.Physics) -> Callable[[], np.ndarray]:
-        return lambda: self._raw_callable(physics)
 
 
 class GoalTask(abc.ABC, composer.Task):
@@ -61,7 +35,8 @@ class GoalTask(abc.ABC, composer.Task):
         self._max_time_per_goal = max_time_per_goal
         self._success_threshold = success_threshold
 
-        self._goal = np.empty(())  # Dummy value.
+        # Initialize with dummy goal to appease `task_observables`.
+        self._goal = self._goal_generator.goal_spec().generate_value()
 
     def after_compile(
         self, physics: mjcf.Physics, random_state: np.random.RandomState
@@ -142,12 +117,9 @@ class GoalTask(abc.ABC, composer.Task):
     def task_observables(self) -> OrderedDict:
         task_observables = OrderedDict()
 
-        def _get_goal(physics: mjcf.Physics) -> np.ndarray:
-            del physics  # Unused.
-            return np.array(self._goal)
-
+        # Add the goal at the current timestep to the task observables.
         goal_spec = self._goal_generator.goal_spec()
-        goal_observable = GoalObservable(_get_goal, goal_spec)
+        goal_observable = goal.GoalObservable(lambda _: np.array(self._goal), goal_spec)
         goal_observable.enabled = True
         task_observables["goal_state"] = goal_observable
 
