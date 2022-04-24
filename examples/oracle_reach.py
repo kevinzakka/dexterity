@@ -32,7 +32,7 @@ def main(_) -> None:
 
     def oracle(timestep: dm_env.TimeStep) -> np.ndarray:
         del timestep  # Unused
-        qpos = env.task._fingertips_initializer.qpos
+        qpos = env.task.goal_generator.qpos  # type: ignore
         ctrl = env.task.hand.joint_positions_to_control(qpos)
         ctrl = ctrl.astype(action_spec.dtype)
         return ctrl
@@ -66,7 +66,7 @@ def main(_) -> None:
         print(f"Episode time: {episode_time_ms:.2f} seconds.")
         print(f"{num_steps} steps taken.")
         print(f"Total reward: {returns}")
-        print(f"Success rate: {env.task.total_solves}/{env.task.max_solves}")
+        print(f"Success rate: {env.task.successes}/{env.task.successes_needed}")
 
     if FLAGS.render:
         imageio.mimsave("temp/oracle_reach.mp4", frames, fps=60, quality=8)

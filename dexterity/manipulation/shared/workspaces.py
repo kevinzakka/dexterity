@@ -4,8 +4,6 @@ import dataclasses
 from typing import Sequence, Tuple
 
 import numpy as np
-from dm_control.composer.variation import distributions
-from dm_control.composer.variation import rotations
 
 from dexterity import hints
 from dexterity.manipulation.shared import constants
@@ -18,12 +16,6 @@ _MIN_SITE_DIMENSION = 1e-6
 class BoundingBox:
     lower: Tuple[float, ...]
     upper: Tuple[float, ...]
-
-
-uniform_z_rotation = rotations.QuaternionFromAxisAngle(
-    axis=(0.0, 0.0, 1.0),
-    angle=distributions.Uniform(-np.pi, np.pi, single_sample=True),
-)
 
 
 def add_bbox_site(

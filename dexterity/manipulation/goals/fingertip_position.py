@@ -1,14 +1,11 @@
-"""Shared initializers for the hand."""
-
-from typing import Optional, Sequence
+from typing import Optional
 
 import numpy as np
-from dm_control import composer
 from dm_control import mjcf
 from dm_control.composer.initializers import utils
 
 from dexterity import exception
-from dexterity import hints
+from dexterity import goal
 from dexterity.models.hands import dexterous_hand
 from dexterity.utils import mujoco_collisions
 from dexterity.utils import mujoco_utils
@@ -19,42 +16,22 @@ _REJECTION_SAMPLING_FAILED = (
 )
 
 
-class FingertipPositionPlacer(composer.Initializer):
-    """An initializer that sets target site positions for the fingertips of a hand.
-
-    This initializer works backwards by sampling a joint configuration for the entire
-    hand, then querying the fingertip positions using forward kinematics. This ensures
-    that the fingertip sites are always reachable.
-    """
-
+class FingertipCartesianPosition(goal.GoalGenerator):
     def __init__(
         self,
-        target_sites: Sequence[hints.MjcfElement],
         hand: dexterous_hand.DexterousHand,
         ignore_self_collisions: bool = False,
         max_rejection_samples: int = 100,
         scale: float = 0.1,
+        name: str = "fingertip_position_goal_generator",
     ) -> None:
-        """Constructor.
-
-        Args:
-            target_sites: The target fingertip sites to place.
-            hand: An instance of `fingered_hand.FingeredHand`.
-            ignore_self_collisions: If True, self-collisions are ignored, i.e.,
-                rejection sampling is disabled.
-            max_rejection_samples: The maximum number of joint configurations to sample
-                while attempting to find a collision-free configuration.
-            scale: Standard deviation of the Gaussian noise added to the current joint
-                configuration to sample the goal joint configuration, expressed as a
-                fraction of the max-min range for each joint angle.
-        """
         super().__init__()
 
-        self._target_sites = target_sites
         self._hand = hand
         self._ignore_self_collisions = ignore_self_collisions
         self._max_rejection_samples = max_rejection_samples
         self._scale = scale
+        self._name = name
 
         self._qpos: Optional[np.ndarray] = None
         self._reference_qpos: Optional[np.ndarray] = None
@@ -63,16 +40,20 @@ class FingertipPositionPlacer(composer.Initializer):
         """Returns True if the hand is in a self-collision state."""
         return mujoco_collisions.has_self_collision(physics, self._hand.name)
 
-    def __call__(
+    def initialize_episode(
         self, physics: mjcf.Physics, random_state: np.random.RandomState
     ) -> None:
-        """Sets the position of the fingertip target sites.
+        del random_state  # Unused.
 
-        Raises:
-            RuntimeError: If a collision-free configuration of the fingertips could not
-                be found after `max_rejection_samples` randomly sampled joint
-                configurations.
-        """
+        # Apply gravity compensation.
+        mujoco_utils.compensate_gravity(physics, self._hand.mjcf_model.find_all("body"))
+
+    def current_state(self, physics: mjcf.Physics) -> np.ndarray:
+        return np.array(physics.bind(self._hand.fingertip_sites).xpos)
+
+    def next_goal(
+        self, physics: mjcf.Physics, random_state: np.random.RandomState
+    ) -> np.ndarray:
         joint_binding = physics.bind(self._hand.joints)
         actuator_binding = physics.bind(self._hand.actuators)
 
@@ -83,9 +64,6 @@ class FingertipPositionPlacer(composer.Initializer):
         # Use the midrange of the joint angles as the reference configuration.
         if self._reference_qpos is None:
             self._reference_qpos = joint_limits.mean(axis=1)
-
-        # Apply gravity compensation.
-        mujoco_utils.compensate_gravity(physics, self._hand.mjcf_model.find_all("body"))
 
         initial_qpos = joint_binding.qpos.copy()
         initial_ctrl = actuator_binding.ctrl.copy()
@@ -128,7 +106,22 @@ class FingertipPositionPlacer(composer.Initializer):
                 )
             )
         else:
-            physics.bind(self._target_sites).pos = fingertip_pos
+            return fingertip_pos
+
+    def relative_goal(
+        self, goal_state: np.ndarray, current_state: np.ndarray
+    ) -> np.ndarray:
+        return goal_state - current_state
+
+    def goal_distance(
+        self, goal_state: np.ndarray, current_state: np.ndarray
+    ) -> np.ndarray:
+        relative_goal = self.relative_goal(goal_state, current_state)
+        return np.linalg.norm(relative_goal, axis=1)
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     @property
     def qpos(self) -> Optional[np.ndarray]:

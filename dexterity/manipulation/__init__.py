@@ -4,6 +4,7 @@ from typing import Optional
 
 from dm_control import composer as _composer
 
+from dexterity import environment
 from dexterity.manipulation.tasks import reach
 from dexterity.manipulation.tasks import reorient
 from dexterity.utils import mujoco_collisions
@@ -70,7 +71,7 @@ def load(
         task.root_entity.mjcf_model
     )
 
-    return _composer.Environment(
+    return environment.Environment(
         task=task,
         time_limit=time_limit or task.time_limit,
         random_state=seed,
