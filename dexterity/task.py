@@ -1,4 +1,3 @@
-import abc
 from collections import OrderedDict
 from typing import Optional
 
@@ -12,7 +11,7 @@ from dexterity import goal
 from dexterity.models.hands import dexterous_hand
 
 
-class GoalTask(abc.ABC, composer.Task):
+class GoalTask(composer.Task):
     """Base class for goal-based dexterous manipulation tasks."""
 
     def __init__(
@@ -129,14 +128,12 @@ class GoalTask(abc.ABC, composer.Task):
         return self._hand_effector.action_spec(physics)
 
     @property
-    def step_limit(self) -> Optional[int]:
-        """The maximum number of steps in an episode."""
-        return None
+    def goal_generator(self) -> goal.GoalGenerator:
+        return self._goal_generator
 
     @property
-    def time_limit(self) -> float:
-        """The maximum number of seconds in an episode."""
-        return float("inf")
+    def hand(self) -> dexterous_hand.DexterousHand:
+        return self._hand
 
     @property
     def successes(self) -> int:
@@ -147,9 +144,11 @@ class GoalTask(abc.ABC, composer.Task):
         return self._successes_needed
 
     @property
-    def goal_generator(self) -> goal.GoalGenerator:
-        return self._goal_generator
+    def step_limit(self) -> Optional[int]:
+        """The maximum number of steps in an episode."""
+        return None
 
     @property
-    def hand(self) -> dexterous_hand.DexterousHand:
-        return self._hand
+    def time_limit(self) -> float:
+        """The maximum number of seconds in an episode."""
+        return float("inf")
