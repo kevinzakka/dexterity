@@ -11,31 +11,24 @@ from dexterity import goal
 from dexterity.models.hands import dexterous_hand
 
 
-class GoalTask(composer.Task):
-    """Base class for goal-based dexterous manipulation tasks."""
+class Task(composer.Task):
+    """Base class for dexterous manipulation tasks.
+
+    This class overrides the `before_step` method by delegating the actuation to the
+    `hand_effector`.
+    """
 
     def __init__(
         self,
         arena: composer.Arena,
         hand: dexterous_hand.DexterousHand,
         hand_effector: effector.Effector,
-        goal_generator: goal.GoalGenerator,
-        success_threshold: float,
-        successes_needed: int = 1,
-        steps_before_changing_goal: int = 0,
-        max_time_per_goal: Optional[float] = None,
     ) -> None:
         self._arena = arena
         self._hand = hand
         self._hand_effector = hand_effector
-        self._goal_generator = goal_generator
-        self._steps_before_changing_goal = steps_before_changing_goal
-        self._successes_needed = successes_needed
-        self._max_time_per_goal = max_time_per_goal
-        self._success_threshold = success_threshold
 
-        # Initialize with dummy goal to appease `task_observables`.
-        self._goal = self._goal_generator.goal_spec().generate_value()
+    # Composer overrides.
 
     def after_compile(
         self, physics: mjcf.Physics, random_state: np.random.RandomState
@@ -48,6 +41,79 @@ class GoalTask(composer.Task):
         self, physics: mjcf.Physics, random_state: np.random.RandomState
     ) -> None:
         self._hand_effector.initialize_episode(physics, random_state)
+
+    def before_step(
+        self,
+        physics: mjcf.Physics,
+        action: np.ndarray,
+        random_state: np.random.RandomState,
+    ) -> None:
+        del random_state  # Unused.
+
+        self._hand_effector.set_control(physics, action)
+
+    def action_spec(self, physics: mjcf.Physics) -> specs.BoundedArray:
+        return self._hand_effector.action_spec(physics)
+
+    # Accessors.
+
+    @property
+    def root_entity(self) -> composer.Entity:
+        return self._arena
+
+    @property
+    def arena(self) -> composer.Arena:
+        return self._arena
+
+    @property
+    def hand(self) -> dexterous_hand.DexterousHand:
+        return self._hand
+
+    @property
+    def hand_effector(self) -> effector.Effector:
+        return self._hand_effector
+
+    @property
+    def step_limit(self) -> Optional[int]:
+        """The maximum number of steps in an episode."""
+        return None
+
+    @property
+    def time_limit(self) -> float:
+        """The maximum number of seconds in an episode."""
+        return float("inf")
+
+
+class GoalTask(Task):
+    """Goal reaching based tasks."""
+
+    def __init__(
+        self,
+        arena: composer.Arena,
+        hand: dexterous_hand.DexterousHand,
+        hand_effector: effector.Effector,
+        goal_generator: goal.GoalGenerator,
+        success_threshold: float,
+        successes_needed: int = 1,
+        steps_before_changing_goal: int = 0,
+        max_time_per_goal: Optional[float] = None,
+    ) -> None:
+        super().__init__(arena, hand, hand_effector)
+
+        self._goal_generator = goal_generator
+        self._steps_before_changing_goal = steps_before_changing_goal
+        self._successes_needed = successes_needed
+        self._max_time_per_goal = max_time_per_goal
+        self._success_threshold = success_threshold
+
+        # Initialize with dummy goal to appease `task_observables`.
+        self._goal = self._goal_generator.goal_spec().generate_value()
+
+    def initialize_episode(
+        self, physics: mjcf.Physics, random_state: np.random.RandomState
+    ) -> None:
+        super().initialize_episode(physics, random_state)
+
         self._goal_generator.initialize_episode(physics, random_state)
 
         # Generate the first goal.
@@ -61,6 +127,8 @@ class GoalTask(composer.Task):
         self._goal_changed = True
 
     def before_step(self, physics, action, random_state):
+        super().before_step(physics, action, random_state)
+
         if self._success_change_counter >= self._steps_before_changing_goal:
             self._goal = self._goal_generator.next_goal(physics, random_state)
             self._success_change_counter = 0
@@ -70,8 +138,6 @@ class GoalTask(composer.Task):
             self._success_registered = False
         else:
             self._goal_changed = False
-
-        self._hand_effector.set_control(physics, action)
 
     def after_step(
         self, physics: mjcf.Physics, random_state: np.random.RandomState
@@ -132,23 +198,9 @@ class GoalTask(composer.Task):
         return self._goal_generator
 
     @property
-    def hand(self) -> dexterous_hand.DexterousHand:
-        return self._hand
-
-    @property
     def successes(self) -> int:
         return self._successes
 
     @property
     def successes_needed(self) -> int:
         return self._successes_needed
-
-    @property
-    def step_limit(self) -> Optional[int]:
-        """The maximum number of steps in an episode."""
-        return None
-
-    @property
-    def time_limit(self) -> float:
-        """The maximum number of seconds in an episode."""
-        return float("inf")

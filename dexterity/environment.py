@@ -6,8 +6,8 @@ from dexterity import exception
 from dexterity import task
 
 
-class Environment(composer.Environment):
-    """A composer.Environment for dexterous manipulation tasks."""
+class GoalEnvironment(composer.Environment):
+    """A composer.Environment for `GoalTask`s."""
 
     task: task.GoalTask
 

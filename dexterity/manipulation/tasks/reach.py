@@ -136,10 +136,6 @@ class Reach(task.GoalTask):
 
         self.set_timesteps(control_timestep, physics_timestep)
 
-    @property
-    def root_entity(self) -> composer.Entity:
-        return self._arena
-
     def initialize_episode(
         self, physics: mjcf.Physics, random_state: np.random.RandomState
     ) -> None:

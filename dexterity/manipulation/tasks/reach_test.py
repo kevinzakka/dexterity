@@ -3,7 +3,7 @@
 import numpy as np
 from absl.testing import absltest
 
-from dexterity.environment import Environment
+from dexterity.environment import GoalEnvironment
 from dexterity.manipulation.shared import observations
 from dexterity.manipulation.tasks import reach_task
 
@@ -17,7 +17,7 @@ class ReachTaskTest(absltest.TestCase):
         )
 
         random_state = np.random.RandomState(12345)
-        env = Environment(task, random_state=random_state)
+        env = GoalEnvironment(task, random_state=random_state)
         action_spec = env.action_spec()
 
         env.reset()
