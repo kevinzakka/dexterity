@@ -21,7 +21,6 @@ class FingertipCartesianPosition(goal.GoalGenerator):
     def __init__(
         self,
         hand: dexterous_hand.DexterousHand,
-        ignore_self_collisions: bool = False,
         max_rejection_samples: int = 100,
         scale: float = 0.1,
         name: str = "fingertip_position_goal_generator",
@@ -29,16 +28,20 @@ class FingertipCartesianPosition(goal.GoalGenerator):
         super().__init__()
 
         self._hand = hand
-        self._ignore_self_collisions = ignore_self_collisions
         self._max_rejection_samples = max_rejection_samples
         self._scale = scale
         self._name = name
 
         self._qpos: Optional[np.ndarray] = None
         self._reference_qpos: Optional[np.ndarray] = None
+        self._goal_spec = None
 
     def goal_spec(self) -> specs.Array:
-        return specs.Array(shape=(15,), dtype=np.float64)
+        if self._goal_spec is None:
+            self._goal_spec = specs.Array(
+                shape=(15,), dtype=np.float64, name=self._name
+            )
+        return self._goal_spec
 
     def _has_self_collisions(self, physics: mjcf.Physics) -> bool:
         """Returns True if the hand is in a self-collision state."""
@@ -86,17 +89,20 @@ class FingertipCartesianPosition(goal.GoalGenerator):
             physics.forward()
 
             # Take a few steps to avoid goals that are impossible due to contact.
+            original_time = physics.data.time
             ctrl_desired = self._hand.joint_positions_to_control(qpos_desired)
             actuator_binding.ctrl[:] = ctrl_desired
             with utils.JointStaticIsolator(physics, self._hand.joints):
                 for _ in range(2):
                     physics.step()
 
-            if self._ignore_self_collisions or not self._has_self_collisions(physics):
+            if not self._has_self_collisions(physics):
                 qpos_desired = joint_binding.qpos.copy()
                 fingertip_pos = physics.bind(self._hand.fingertip_sites).xpos.copy()
                 self._qpos = qpos_desired
                 break
+
+            physics.data.time = original_time
 
         # Restore the initial joint configuration and ctrl.
         actuator_binding.ctrl[:] = initial_ctrl

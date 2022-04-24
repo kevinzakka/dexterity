@@ -230,10 +230,7 @@ def reach_task(
 
     hand_effector = effectors.HandEffector(hand=hand, hand_name=hand.name)
 
-    goal_generator = fingertip_position.FingertipCartesianPosition(
-        hand=hand,
-        ignore_self_collisions=False,
-    )
+    goal_generator = fingertip_position.FingertipCartesianPosition(hand=hand)
 
     return Reach(
         arena=arena,

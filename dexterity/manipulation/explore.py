@@ -59,19 +59,7 @@ def main(_) -> None:
     for k, v in timestep.observation.items():
         print(f"{k}: {v.shape}")
 
-    import dm_env
-    import numpy as np
-
-    action_spec = env.action_spec()
-
-    def policy(timestep: dm_env.TimeStep) -> np.ndarray:
-        del timestep  # Unused
-        qpos = env.task.goal_generator.qpos  # type: ignore
-        ctrl = env.task.hand.joint_positions_to_control(qpos)
-        ctrl = ctrl.astype(action_spec.dtype)
-        return ctrl
-
-    viewer.launch(env, policy=policy)
+    viewer.launch(env)
 
 
 if __name__ == "__main__":
