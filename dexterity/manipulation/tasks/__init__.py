@@ -1,3 +1,5 @@
+from dexterity.manipulation.tasks.juggle import Juggle
+from dexterity.manipulation.tasks.juggle import juggle_task
 from dexterity.manipulation.tasks.reach import Reach
 from dexterity.manipulation.tasks.reach import reach_task
 from dexterity.manipulation.tasks.reorient import ReOrient
@@ -8,4 +10,6 @@ __all__ = [
     "reach_task",
     "ReOrient",
     "reorient_task",
+    "Juggle",
+    "juggle_task",
 ]

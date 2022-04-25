@@ -120,8 +120,8 @@ class ReOrient(task.GoalTask):
 
         super().__init__(
             arena=arena,
-            hand=hand,
-            hand_effector=hand_effector,
+            hands=[hand],
+            hand_effectors=[hand_effector],
             goal_generator=goal_generator,
             success_threshold=success_threshold,
             successes_needed=successes_needed,
@@ -170,6 +170,14 @@ class ReOrient(task.GoalTask):
         )
 
         self.set_timesteps(control_timestep, physics_timestep)
+
+    @property
+    def hand(self) -> dexterous_hand.DexterousHand:
+        return self.hands[0]
+
+    @property
+    def hand_effector(self) -> effector.Effector:
+        return self.hand_effectors[0]
 
     @property
     def root_entity(self) -> composer.Entity:

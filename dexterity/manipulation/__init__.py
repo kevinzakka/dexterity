@@ -6,6 +6,7 @@ from dm_control import composer as _composer
 
 from dexterity import environment as _environment
 from dexterity import task as _task
+from dexterity.manipulation.tasks import juggle
 from dexterity.manipulation.tasks import reach
 from dexterity.manipulation.tasks import reorient
 from dexterity.utils import mujoco_collisions

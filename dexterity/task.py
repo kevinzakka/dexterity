@@ -1,5 +1,6 @@
+import re
 from collections import OrderedDict
-from typing import Optional
+from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 from dm_control import composer
@@ -12,21 +13,27 @@ from dexterity.models.hands import dexterous_hand
 
 
 class Task(composer.Task):
-    """Base class for dexterous manipulation tasks.
-
-    This class overrides the `before_step` method by delegating the actuation to the
-    `hand_effector`.
-    """
+    """Base class for dexterous manipulation tasks."""
 
     def __init__(
         self,
         arena: composer.Arena,
-        hand: dexterous_hand.DexterousHand,
-        hand_effector: effector.Effector,
+        hands: Sequence[dexterous_hand.DexterousHand],
+        hand_effectors: Sequence[effector.Effector],
     ) -> None:
         self._arena = arena
-        self._hand = hand
-        self._hand_effector = hand_effector
+        self._hands = tuple(hands)
+        self._hand_effectors = tuple(hand_effectors)
+
+        self._action_spec = None
+
+    def _find_effector_indices(
+        self, eff: effector.Effector, physics: mjcf.Physics
+    ) -> List[bool]:
+        action_spec = self.action_spec(physics)
+        actuator_names = action_spec.name.split("\t")
+        prefix_expr = re.compile(eff.prefix)
+        return [re.match(prefix_expr, name) is not None for name in actuator_names]
 
     # Composer overrides.
 
@@ -35,12 +42,14 @@ class Task(composer.Task):
     ) -> None:
         del physics, random_state  # Unused.
 
-        self._hand_effector.after_compile(self.root_entity.mjcf_model.root)
+        for eff in self._hand_effectors:
+            eff.after_compile(self.root_entity.mjcf_model.root)
 
     def initialize_episode(
         self, physics: mjcf.Physics, random_state: np.random.RandomState
     ) -> None:
-        self._hand_effector.initialize_episode(physics, random_state)
+        for eff in self._hand_effectors:
+            eff.initialize_episode(physics, random_state)
 
     def before_step(
         self,
@@ -50,10 +59,16 @@ class Task(composer.Task):
     ) -> None:
         del random_state  # Unused.
 
-        self._hand_effector.set_control(physics, action)
+        for eff in self._hand_effectors:
+            e_cmd = action[self._find_effector_indices(eff, physics)]
+            eff.set_control(physics, e_cmd)
 
     def action_spec(self, physics: mjcf.Physics) -> specs.BoundedArray:
-        return self._hand_effector.action_spec(physics)
+        if self._action_spec is None:
+            # Merge action specs.
+            a_specs = [a.action_spec(physics) for a in self._hand_effectors]
+            self._action_spec = merge_specs(a_specs)
+        return self._action_spec
 
     # Accessors.
 
@@ -66,12 +81,12 @@ class Task(composer.Task):
         return self._arena
 
     @property
-    def hand(self) -> dexterous_hand.DexterousHand:
-        return self._hand
+    def hands(self) -> Tuple[dexterous_hand.DexterousHand, ...]:
+        return self._hands
 
     @property
-    def hand_effector(self) -> effector.Effector:
-        return self._hand_effector
+    def hand_effectors(self) -> Tuple[effector.Effector, ...]:
+        return self._hand_effectors
 
     @property
     def step_limit(self) -> Optional[int]:
@@ -90,15 +105,15 @@ class GoalTask(Task):
     def __init__(
         self,
         arena: composer.Arena,
-        hand: dexterous_hand.DexterousHand,
-        hand_effector: effector.Effector,
+        hands: Sequence[dexterous_hand.DexterousHand],
+        hand_effectors: Sequence[effector.Effector],
         goal_generator: goal.GoalGenerator,
         success_threshold: float,
         successes_needed: int = 1,
         steps_before_changing_goal: int = 0,
         max_time_per_goal: Optional[float] = None,
     ) -> None:
-        super().__init__(arena, hand, hand_effector)
+        super().__init__(arena, hands, hand_effectors)
 
         self._goal_generator = goal_generator
         self._steps_before_changing_goal = steps_before_changing_goal
@@ -190,9 +205,6 @@ class GoalTask(Task):
 
         return task_observables
 
-    def action_spec(self, physics: mjcf.Physics) -> specs.BoundedArray:
-        return self._hand_effector.action_spec(physics)
-
     @property
     def goal_generator(self) -> goal.GoalGenerator:
         return self._goal_generator
@@ -204,3 +216,33 @@ class GoalTask(Task):
     @property
     def successes_needed(self) -> int:
         return self._successes_needed
+
+
+def merge_specs(spec_list: Sequence[specs.BoundedArray]):
+    """Merges a list of `BoundedArray` specs into one."""
+
+    # Check all specs are flat.
+    for spec in spec_list:
+        if len(spec.shape) > 1:
+            raise ValueError("Not merging multi-dimensional spec: {}".format(spec))
+
+    # Filter out no-op specs with no actuators.
+    spec_list = [spec for spec in spec_list if spec.shape and spec.shape[0]]
+    dtype = np.find_common_type([spec.dtype for spec in spec_list], [])
+
+    num_actions = 0
+    name = ""
+    mins = np.array([], dtype=dtype)
+    maxs = np.array([], dtype=dtype)
+
+    for i, spec in enumerate(spec_list):
+        num_actions += spec.shape[0]
+        if name:
+            name += "\t"
+        name += spec.name or f"spec_{i}"
+        mins = np.concatenate([mins, spec.minimum])
+        maxs = np.concatenate([maxs, spec.maximum])
+
+    return specs.BoundedArray(
+        shape=(num_actions,), dtype=dtype, minimum=mins, maximum=maxs, name=name
+    )

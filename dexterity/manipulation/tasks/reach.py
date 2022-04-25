@@ -92,8 +92,8 @@ class Reach(task.GoalTask):
 
         super().__init__(
             arena=arena,
-            hand=hand,
-            hand_effector=hand_effector,
+            hands=[hand],
+            hand_effectors=[hand_effector],
             goal_generator=goal_generator,
             success_threshold=success_threshold,
             successes_needed=successes_needed,
@@ -136,6 +136,14 @@ class Reach(task.GoalTask):
 
         self.set_timesteps(control_timestep, physics_timestep)
 
+    @property
+    def hand(self) -> dexterous_hand.DexterousHand:
+        return self.hands[0]
+
+    @property
+    def hand_effector(self) -> effector.Effector:
+        return self.hand_effectors[0]
+
     def initialize_episode(
         self, physics: mjcf.Physics, random_state: np.random.RandomState
     ) -> None:
@@ -160,7 +168,7 @@ class Reach(task.GoalTask):
             for i, geoms in enumerate(consts.FINGER_GEOM_MAPPING.values()):
                 elems = [
                     elem
-                    for elem in self._hand.mjcf_model.find_all("geom")
+                    for elem in self.hand.mjcf_model.find_all("geom")
                     if elem.name in geoms
                 ]
                 self._init_finger_colors[i] = (elems, physics.bind(elems).rgba)
