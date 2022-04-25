@@ -18,7 +18,7 @@
 
     The modifications made by Roboti LLC are also licensed under the Apache License version 2.0.
     -->
-    <compiler angle="radian" meshdir="../mesh/mesh_left/" texturedir="../texture/"/>
+    <compiler angle="radian" meshdir="../meshes/mesh_left/" texturedir="../texture/"/>
     <option apirate="50" iterations="50"/>
     <size njmax="600" nconmax="150" nstack="300000"/>
     <visual>

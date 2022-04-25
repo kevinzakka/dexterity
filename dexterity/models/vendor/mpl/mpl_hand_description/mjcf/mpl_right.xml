@@ -1,4 +1,4 @@
-<mujoco model="mpl_right">
+<mujoco model="MPL_right(v1.31)">
     <!--
     This file and the .stl mesh files referenced from it have been derived by Roboti LLC from the model of the Modular Prosthetic Limb developed by The Johns Hopkins University / Applied Physics Laboratory. The modifications are as follows: the original meshes have been replaced with their convex hulls; the original URDF model has been converted to the MJCF format and a number of MJCF-specific fields have been added.
 
@@ -18,7 +18,7 @@
 
     The modifications made by Roboti LLC are also licensed under the Apache License version 2.0.
     -->
-    <compiler angle="radian" meshdir="../mesh/mesh_right/" texturedir="../texture/"/>
+    <compiler angle="radian" meshdir="../meshes/mesh_right/" texturedir="../texture/"/>
     <option apirate="50" iterations="50"/>
     <size njmax="600" nconmax="150" nstack="300000"/>
     <visual>
