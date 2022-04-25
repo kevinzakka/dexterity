@@ -27,6 +27,7 @@ class Task(composer.Task):
 
         self._action_spec = None
 
+    # Reference: https://github.com/deepmind/dm_robotics/blob/main/py/moma/subtask_env.py
     def _find_effector_indices(
         self, eff: effector.Effector, physics: mjcf.Physics
     ) -> List[bool]:
@@ -218,6 +219,7 @@ class GoalTask(Task):
         return self._successes_needed
 
 
+# Reference: https://github.com/deepmind/dm_robotics/blob/main/py/agentflow/spec_utils.py
 def merge_specs(spec_list: Sequence[specs.BoundedArray]):
     """Merges a list of `BoundedArray` specs into one."""
 
