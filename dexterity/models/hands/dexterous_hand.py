@@ -1,4 +1,5 @@
 import abc
+import enum
 from typing import List
 
 import numpy as np
@@ -9,6 +10,13 @@ from dm_robotics.transformations import transformations as tr
 
 from dexterity.hints import MjcfElement
 from dexterity.utils import mujoco_utils
+
+
+class HandSide(enum.Enum):
+    """The side of the hand being modeled."""
+
+    LEFT = enum.auto()
+    RIGHT = enum.auto()
 
 
 class DexterousHand(abc.ABC, composer.Entity):

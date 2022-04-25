@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Tuple
 
 from dm_control import composer
 
@@ -32,11 +32,13 @@ class Arena(composer.Arena):
         position: Optional[Sequence[float]] = None,
         quaternion: Optional[Sequence[float]] = None,
         visible: bool = False,
-    ) -> None:
+        color: Tuple[float, float, float, float] = (0.9, 0.5, 0.5, 1.0),
+        name: str = "mocap",
+    ) -> hints.MjcfElement:
         # Add mocap body.
         mocap_body = self.mjcf_model.worldbody.add(
             "body",
-            name="mocap",
+            name=name,
             mocap="true",
             pos=position,
             quat=quaternion,
@@ -51,7 +53,7 @@ class Arena(composer.Arena):
                 size="0.02 0.02 0.02",
                 contype="0",
                 conaffinity="0",
-                rgba=".9 .5 .5 1",
+                rgba=color,
             )
 
         # Make root body of entity's pose same as mocap pose.
@@ -65,8 +67,10 @@ class Arena(composer.Arena):
         # Add a weld constraint between the mocap body and the root body.
         self.mjcf_model.equality.add(
             "weld",
-            body1="mocap",
+            body1=name,
             body2=root_body.full_identifier,
             solref="0.01 1",
             solimp=".9 .9 0.01",
         )
+
+        return mocap_body

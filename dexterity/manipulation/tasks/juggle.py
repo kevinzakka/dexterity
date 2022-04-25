@@ -16,15 +16,18 @@ from dexterity.manipulation import props
 from dexterity.manipulation.shared import cameras
 from dexterity.manipulation.shared import observations
 from dexterity.manipulation.shared import tags
-from dexterity.models.hands import adroit_hand
 from dexterity.models.hands import dexterous_hand
-
-# The position of the hand relative in the world frame, in meters.
-_LEFT_HAND_POS = (-0.1, 0.2, 0.1)
-_RIGHT_HAND_POS = (0.1, 0.2, 0.1)
+from dexterity.models.hands import mpl_hand
 
 # The orientation of the hand relative to the world frame.
-_HAND_QUAT = (0.0, 0.0, 0.707106781186, -0.707106781186)
+_HAND_QUAT = (0.0, 0.0, 0.7, 0.0)
+
+# The position of the hand relative in the world frame, in meters.
+_RIGHT_HAND_POS = (-0.1, 0.0, 0.1)
+_LEFT_HAND_POS = (0.1, 0.0, 0.1)
+
+_LEFT_MOCAP_COLOR = (0.9, 0.5, 0.5, 1.0)
+_RIGHT_MOCAP_COLOR = (0.5, 0.9, 0.5, 1.0)
 
 _BALL_RADIUS = 0.025
 
@@ -63,8 +66,22 @@ class Juggle(task.Task):
         self._use_dense_reward = use_dense_reward
 
         # Attach the hand to the arena.
-        arena.attach_offset(hands[0], position=_LEFT_HAND_POS, quaternion=_HAND_QUAT)
-        arena.attach_offset(hands[1], position=_RIGHT_HAND_POS, quaternion=_HAND_QUAT)
+        self._left_mocap = arena.add_mocap(
+            hands[0],
+            position=_LEFT_HAND_POS,
+            quaternion=_HAND_QUAT,
+            name="left_mocap",
+            visible=True,
+            color=_LEFT_MOCAP_COLOR,
+        )
+        self._right_mocap = arena.add_mocap(
+            hands[1],
+            position=_RIGHT_HAND_POS,
+            quaternion=_HAND_QUAT,
+            name="right_mocap",
+            visible=True,
+            color=_RIGHT_MOCAP_COLOR,
+        )
 
         # Add a ball.
         ball = props.JugglingBall(radius=_BALL_RADIUS)
@@ -139,21 +156,21 @@ def juggle_task(
     """Configure and instantiate a `Juggle` task."""
     arena = arenas.Standard()
 
-    left_hand = adroit_hand.AdroitHand(
+    left_hand = mpl_hand.MPLHand(
+        side=dexterous_hand.HandSide.LEFT,
         observable_options=observations.make_options(
             observation_set.value,
             observations.HAND_OBSERVABLES,
         ),
-        name="left_hand",
     )
     left_hand_effector = effectors.HandEffector(left_hand, left_hand.name)
 
-    right_hand = adroit_hand.AdroitHand(
+    right_hand = mpl_hand.MPLHand(
+        side=dexterous_hand.HandSide.RIGHT,
         observable_options=observations.make_options(
             observation_set.value,
             observations.HAND_OBSERVABLES,
         ),
-        name="right_hand",
     )
     right_hand_effector = effectors.HandEffector(right_hand, right_hand.name)
 
