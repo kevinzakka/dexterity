@@ -12,8 +12,8 @@ from matplotlib import pyplot as plt
 from dexterity.inverse_kinematics import ik_solver
 from dexterity.manipulation.shared import cameras
 from dexterity.manipulation.shared import workspaces
+from dexterity.models import hands
 from dexterity.models.arenas import Arena
-from dexterity.models.hands import shadow_hand_e
 
 flags.DEFINE_integer("seed", None, "Random seed.")
 flags.DEFINE_integer("num_solves", 1, "Number of IK solves.")
@@ -42,7 +42,7 @@ def main(_) -> None:
     arena = Arena()
     axis_angle = np.radians(180) * np.array([0, np.sqrt(2) / 2, -np.sqrt(2) / 2])
     quat = tr.axisangle_to_quat(axis_angle)
-    hand = shadow_hand_e.ShadowHandSeriesE()
+    hand = hands.ShadowHandSeriesE()
     arena.attach_offset(hand, position=(0, 0.2, 0.1), quaternion=quat)
 
     # Add camera.
