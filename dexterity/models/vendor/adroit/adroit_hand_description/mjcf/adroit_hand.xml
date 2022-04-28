@@ -16,7 +16,7 @@
         <quality shadowsize="4096"/>
         <map force="0.1" fogend="5"/>
     </visual>
-    <default class="main">
+    <default>
         <default class="Adroit">
             <joint limited="true" margin="0.01" armature="0.001" damping="0.05" frictionloss="0.001"/>
             <geom friction="1 0.005 0.001" margin="0.0005"/>

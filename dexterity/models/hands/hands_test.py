@@ -3,15 +3,22 @@ from absl.testing import absltest
 from absl.testing import parameterized
 from dm_control import mjcf
 
+from dexterity.models.hands import adroit_hand
+from dexterity.models.hands import adroit_hand_constants
+from dexterity.models.hands import mpl_hand
+from dexterity.models.hands import mpl_hand_constants
 from dexterity.models.hands import shadow_hand_e
-from dexterity.models.hands import shadow_hand_e_constants as consts
+from dexterity.models.hands import shadow_hand_e_constants
 
 
 class ShadowHandEConstantsTest(absltest.TestCase):
     def test_projection_matrices(self) -> None:
         # Matrix multiplication of these two matrices should be the identity.
-        actual = consts.POSITION_TO_CONTROL @ consts.CONTROL_TO_POSITION
-        expected = np.eye(consts.NUM_ACTUATORS)
+        actual = (
+            shadow_hand_e_constants.POSITION_TO_CONTROL
+            @ shadow_hand_e_constants.CONTROL_TO_POSITION
+        )
+        expected = np.eye(shadow_hand_e_constants.NUM_ACTUATORS)
         np.testing.assert_array_equal(actual, expected)
 
 
@@ -33,14 +40,14 @@ class ShadowHandSeriesETest(parameterized.TestCase):
         self.assertEqual(hand.mjcf_model.model, name)
 
     def test_joints(self) -> None:
-        self.assertLen(self.hand.joints, consts.NUM_JOINTS)
+        self.assertLen(self.hand.joints, shadow_hand_e_constants.NUM_JOINTS)
         for joint in self.hand.joints:
             self.assertEqual(joint.tag, "joint")
 
     def test_actuators(self) -> None:
-        self.assertLen(self.hand.actuators, consts.NUM_ACTUATORS)
+        self.assertLen(self.hand.actuators, shadow_hand_e_constants.NUM_ACTUATORS)
         for actuator in self.hand.actuators:
-            self.assertEqual(actuator.tag, "general")
+            self.assertEqual(actuator.tag, "position")
 
     def test_control_to_joint_pos(self) -> None:
         # Randomly generate a control for the hand.
@@ -83,7 +90,7 @@ class ShadowHandSeriesETest(parameterized.TestCase):
 
         actual = self.hand.control_to_joint_positions(control)
         np.testing.assert_array_equal(actual, expected)
-        self.assertEqual(actual.shape, (consts.NUM_JOINTS,))
+        self.assertEqual(actual.shape, (shadow_hand_e_constants.NUM_JOINTS,))
 
     def test_raises_when_control_wrong_len(self) -> None:
         control = np.array([0.0])
@@ -130,7 +137,7 @@ class ShadowHandSeriesETest(parameterized.TestCase):
 
         actual = self.hand.joint_positions_to_control(qpos)
         np.testing.assert_array_equal(actual, expected)
-        self.assertEqual(actual.shape, (consts.NUM_ACTUATORS,))
+        self.assertEqual(actual.shape, (shadow_hand_e_constants.NUM_ACTUATORS,))
 
     def test_raises_when_qpos_wrong_len(self) -> None:
         qpos = np.array([0.0])
@@ -138,10 +145,95 @@ class ShadowHandSeriesETest(parameterized.TestCase):
             self.hand.joint_positions_to_control(qpos)
 
     def test_set_joint_angles(self) -> None:
-        rand_qpos = np.random.uniform(
-            low=self.physics.bind(self.hand.joints).range[:, 0],
-            high=self.physics.bind(self.hand.joints).range[:, 1],
-        )
+        rand_qpos = np.random.uniform(*self.physics.bind(self.hand.joints).range.T)
+        self.hand.set_joint_angles(self.physics, rand_qpos)
+        physics_joints_qpos = self.physics.bind(self.hand.joints).qpos
+        np.testing.assert_array_equal(physics_joints_qpos, rand_qpos)
+
+
+class AdroitHandTest(parameterized.TestCase):
+    def setUp(self) -> None:
+        self.hand = adroit_hand.AdroitHand()
+        self.physics = mjcf.Physics.from_mjcf_model(self.hand.mjcf_model)
+
+    def test_can_compile_and_step_model(self) -> None:
+        for _ in range(100):
+            self.physics.step()
+
+    def test_initialize_episode(self) -> None:
+        self.hand.initialize_episode(self.physics, np.random.RandomState(0))
+
+    def test_set_name(self) -> None:
+        name = "hand_of_glory"
+        hand = adroit_hand.AdroitHand(name=name)
+        self.assertEqual(hand.mjcf_model.model, name)
+
+    def test_joints(self) -> None:
+        self.assertLen(self.hand.joints, adroit_hand_constants.NUM_JOINTS)
+        for joint in self.hand.joints:
+            self.assertEqual(joint.tag, "joint")
+
+    def test_actuators(self) -> None:
+        self.assertLen(self.hand.actuators, adroit_hand_constants.NUM_ACTUATORS)
+        for actuator in self.hand.actuators:
+            self.assertEqual(actuator.tag, "general")
+
+    def test_raises_when_control_wrong_len(self) -> None:
+        control = np.array([0.0])
+        with self.assertRaises(ValueError):
+            self.hand.control_to_joint_positions(control)
+
+    def test_raises_when_qpos_wrong_len(self) -> None:
+        qpos = np.array([0.0])
+        with self.assertRaises(ValueError):
+            self.hand.joint_positions_to_control(qpos)
+
+    def test_set_joint_angles(self) -> None:
+        rand_qpos = np.random.uniform(*self.physics.bind(self.hand.joints).range.T)
+        self.hand.set_joint_angles(self.physics, rand_qpos)
+        physics_joints_qpos = self.physics.bind(self.hand.joints).qpos
+        np.testing.assert_array_equal(physics_joints_qpos, rand_qpos)
+
+
+class MPLHandTest(parameterized.TestCase):
+    def setUp(self) -> None:
+        self.hand = mpl_hand.MPLHand()
+        self.physics = mjcf.Physics.from_mjcf_model(self.hand.mjcf_model)
+
+    def test_can_compile_and_step_model(self) -> None:
+        for _ in range(100):
+            self.physics.step()
+
+    def test_initialize_episode(self) -> None:
+        self.hand.initialize_episode(self.physics, np.random.RandomState(0))
+
+    def test_set_name(self) -> None:
+        name = "hand_of_glory"
+        hand = mpl_hand.MPLHand(name=name)
+        self.assertEqual(hand.mjcf_model.model, f"right_{name}")
+
+    def test_joints(self) -> None:
+        self.assertLen(self.hand.joints, mpl_hand_constants.NUM_JOINTS)
+        for joint in self.hand.joints:
+            self.assertEqual(joint.tag, "joint")
+
+    def test_actuators(self) -> None:
+        self.assertLen(self.hand.actuators, mpl_hand_constants.NUM_ACTUATORS)
+        for actuator in self.hand.actuators:
+            self.assertEqual(actuator.tag, "general")
+
+    def test_raises_when_control_wrong_len(self) -> None:
+        control = np.array([0.0])
+        with self.assertRaises(ValueError):
+            self.hand.control_to_joint_positions(control)
+
+    def test_raises_when_qpos_wrong_len(self) -> None:
+        qpos = np.array([0.0])
+        with self.assertRaises(ValueError):
+            self.hand.joint_positions_to_control(qpos)
+
+    def test_set_joint_angles(self) -> None:
+        rand_qpos = np.random.uniform(*self.physics.bind(self.hand.joints).range.T)
         self.hand.set_joint_angles(self.physics, rand_qpos)
         physics_joints_qpos = self.physics.bind(self.hand.joints).qpos
         np.testing.assert_array_equal(physics_joints_qpos, rand_qpos)

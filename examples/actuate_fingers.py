@@ -38,7 +38,7 @@ def main() -> None:
     hand.mjcf_model.worldbody.add(
         "camera",
         name="cam0",
-        pos="0 -1.0 0.6",
+        pos="0 -0.6 0.5",
         xyaxes="1 0 0 0 1 2",
     )
     # Add light.
@@ -66,19 +66,19 @@ def main() -> None:
     # Wave wrist.
     time += duration_per
     for i in range(2):
-        control[0] = consts.ACTUATOR_CTRLRANGE[consts.Actuators.A_WRJ1][0]
+        control[0] = consts.ACTUATOR_CTRLRANGE["A_WRJ1"][0]
         physics.bind(hand.actuators).ctrl[:] = hand.joint_positions_to_control(control)
         render(physics, frames, time, framerate)
         if i == 1:
             control[0] = 0.0
         else:
-            control[0] = consts.ACTUATOR_CTRLRANGE[consts.Actuators.A_WRJ1][1]
+            control[0] = consts.ACTUATOR_CTRLRANGE["A_WRJ1"][1]
         physics.bind(hand.actuators).ctrl[:] = hand.joint_positions_to_control(control)
         render(physics, frames, time + duration_per, framerate)
         time += 2 * duration_per
 
     # Thumb.
-    control[23] = consts.ACTUATOR_CTRLRANGE[consts.Actuators.A_THJ0][1]
+    control[23] = consts.ACTUATOR_CTRLRANGE["A_THJ0"][1]
     physics.bind(hand.actuators).ctrl[:] = hand.joint_positions_to_control(control)
     render(physics, frames, time, framerate)
 
@@ -140,7 +140,7 @@ def main() -> None:
 
     # Thumb.
     time += duration_per
-    control[23] = consts.ACTUATOR_CTRLRANGE[consts.Actuators.A_THJ0][0]
+    control[23] = consts.ACTUATOR_CTRLRANGE["A_THJ0"][0]
     physics.bind(hand.actuators).ctrl[:] = hand.joint_positions_to_control(control)
     render(physics, frames, time, framerate)
 

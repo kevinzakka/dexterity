@@ -1,9 +1,8 @@
-# TODO(kevin): Make this work for all hands.
 # TODO(kevin): In the future, we'd like to solve for finger orientation as well.
 
 import copy
 import dataclasses
-from typing import Mapping, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence
 
 import mujoco
 import numpy as np
@@ -13,7 +12,7 @@ from dm_robotics.geometry import geometry
 from dm_robotics.geometry import mujoco_physics
 
 from dexterity import controllers
-from dexterity.models.hands import shadow_hand_e_constants as consts
+from dexterity.models.hands import dexterous_hand
 from dexterity.utils import mujoco_utils
 
 # Gain for the linear twist computation, should always be between 0 and 1.
@@ -44,97 +43,31 @@ class _Solution:
 class IKSolver:
     """Inverse kinematics solver for a dexterous hand."""
 
-    def __init__(
-        self,
-        model: mjcf.RootElement,
-        fingers: Optional[Sequence[consts.Components]] = None,
-        prefix: str = "",
-    ) -> None:
-        """Constructor.
-
-        Args:
-            model: The MJCF model root.
-            prefix: The prefix assigned to the hand model in case it is attached to
-                another entity.
-        """
-        self._physics = mjcf.Physics.from_mjcf_model(model)
+    def __init__(self, hand: dexterous_hand.DexterousHand) -> None:
+        # Note: We need the root model in case the hand is attached to another entity.
+        self._physics = mjcf.Physics.from_mjcf_model(hand.mjcf_model.root_model)
         self._geometry_physics = mujoco_physics.wrap(self._physics)
 
-        if fingers is None:
-            self._fingers = consts.FINGERS
-        else:
-            self._fingers = tuple(fingers)
+        self._elements = hand.fingertip_sites
+        self._joint_groups = hand.joint_groups
 
-        # Wrist information.
-        wrist_joint_names = [j.name for j in consts.JOINT_GROUP[consts.Components.WR]]
-        self._wrist_controllable_joints = []
-        for joint_name in wrist_joint_names:
-            joint_elem = model.find(
-                "joint", mujoco_utils.prefix_identifier(joint_name, prefix)
-            )
-            self._wrist_controllable_joints.append(joint_elem)
-        assert len(self._wrist_controllable_joints) == len(wrist_joint_names)
-        self._wrist_num_joints = len(wrist_joint_names)
-        self._wirst_joint_bindings = self._physics.bind(self._wrist_controllable_joints)
-        self._wrist_nullspace_joint_position_reference = np.zeros(
-            self._wrist_num_joints
-        )
+        # Get joint bindings.
+        self._all_joints_binding = self._physics.bind(hand.joints)
+        self._joint_bindings = []
+        for joint_group in self._joint_groups:
+            joint_binding = self._physics.bind(joint_group.joints)
+            self._joint_bindings.append(joint_binding)
 
-        # Finger information.
-        self._controllable_joints = {}
-        self._elements = {}
-        for finger in self._fingers:
-            fingertip_name = consts.FINGER_FINGERTIP_MAPPING[finger]
-            fingertip_site_name = mujoco_utils.prefix_identifier(
-                f"{fingertip_name}_site", prefix
-            )
-            fingertip_site_elem = model.find("site", fingertip_site_name)
-            assert fingertip_site_elem is not None
-            self._elements[finger] = fingertip_site_elem
-
-            joint_names = [j.name for j in consts.JOINT_GROUP[finger]]
-            joint_names += wrist_joint_names
-            controllable_joints = []
-            for joint_name in joint_names:
-                joint_elem = model.find(
-                    "joint", mujoco_utils.prefix_identifier(joint_name, prefix)
-                )
-                controllable_joints.append(joint_elem)
-            assert len(controllable_joints) == len(joint_names)
-            self._controllable_joints[finger] = controllable_joints
-
-        # Get all the joints of the hand.
-        self._all_joints = []
-        for joint_name in consts.JOINT_NAMES:
-            joint_elem = model.find(
-                "joint", mujoco_utils.prefix_identifier(joint_name, prefix)
-            )
-            assert joint_elem is not None
-            self._all_joints.append(joint_elem)
-
-        self._joint_bindings = {}
-        self._num_joints = {}
-        for finger, controllable_joints in self._controllable_joints.items():
-            self._joint_bindings[finger] = self._physics.bind(controllable_joints)
-            self._num_joints[finger] = len(controllable_joints)
-        self._all_joints_binding = self._physics.bind(self._all_joints)
-
-        self._nullspace_joint_position_reference = np.mean(
-            self._all_joints_binding.range, axis=1
-        )
+        # Make the midrange of the joints be the nullspace.
+        self._nullspace_reference = np.mean(self._all_joints_binding.range, axis=1)
 
         self._create_mapper()
 
-    @property
-    def fingers(self) -> Tuple[consts.Components, ...]:
-        return self._fingers
-
     def _create_mapper(self) -> None:
-        obj_types = []
-        obj_names = []
-        for finger in self._fingers:
-            obj_types.append(mujoco_utils.get_element_type(self._elements[finger]))
-            obj_names.append(self._elements[finger].full_identifier)
+        obj_types = [
+            mujoco_utils.get_element_type(element) for element in self._elements
+        ]
+        obj_names = [element.full_identifier for element in self._elements]
         params = controllers.dls.DampedLeastSquaresParameters(
             model=self._physics.model,
             object_types=obj_types,
@@ -145,13 +78,20 @@ class IKSolver:
 
     def solve(
         self,
-        target_positions: Mapping[consts.Components, np.ndarray],
+        target_positions: np.ndarray,
         linear_tol: float = 1e-3,
         max_steps: int = 100,
         early_stop: bool = False,
         num_attempts: int = 30,
         stop_on_first_successful_attempt: bool = False,
     ) -> Optional[np.ndarray]:
+        target_positions = target_positions.reshape(-1, 3)
+        if target_positions.shape[0] != len(self._elements):
+            raise ValueError(
+                "The number of target positions must be equal to the number of "
+                "end-effector sites."
+            )
+
         nullspace_jnt_qpos_min_err: float = np.inf
         success: bool = False
         sol_qpos: Optional[np.ndarray] = None
@@ -161,13 +101,10 @@ class IKSolver:
             # Randomize the initial joint configuration so that the IK can find
             # different solutions.
             if attempt == 0:
-                self._all_joints_binding.qpos[
-                    :
-                ] = self._nullspace_joint_position_reference
+                self._all_joints_binding.qpos = self._nullspace_reference
             else:
-                self._all_joints_binding.qpos[:] = np.random.uniform(
-                    self._all_joints_binding.range[:, 0],
-                    self._all_joints_binding.range[:, 1],
+                self._all_joints_binding.qpos = np.random.uniform(
+                    *self._all_joints_binding.range.T
                 )
 
             solution = self._solve_ik(
@@ -181,9 +118,7 @@ class IKSolver:
                 success = True
 
                 nullspace_jnt_qpos_err = float(
-                    np.linalg.norm(
-                        solution.qpos - self._nullspace_joint_position_reference
-                    )
+                    np.linalg.norm(solution.qpos - self._nullspace_reference)
                 )
                 if nullspace_jnt_qpos_err < nullspace_jnt_qpos_min_err:
                     nullspace_jnt_qpos_min_err = nullspace_jnt_qpos_err
@@ -199,29 +134,29 @@ class IKSolver:
 
     def _solve_ik(
         self,
-        target_positions: Mapping[consts.Components, np.ndarray],
+        target_positions: np.ndarray,
         linear_tol: float,
         max_steps: int,
         early_stop: bool,
     ) -> _Solution:
         """Solves for a joint configuration that brings element pose to target pose."""
-        cur_frames = {}
-        cur_poses = {}
-        previous_poses = {}
-        for finger, target_position in target_positions.items():
-            cur_frame = geometry.PoseStamped(pose=None, frame=self._elements[finger])
+        cur_frames: List[geometry.PoseStamped] = []
+        cur_poses: List[geometry.Pose] = []
+        previous_poses: List[geometry.Pose] = []
+        for element in self._elements:
+            cur_frame = geometry.PoseStamped(pose=None, frame=element)
             cur_pose = cur_frame.get_world_pose(self._geometry_physics)
-            cur_frames[finger] = cur_frame
-            cur_poses[finger] = cur_pose
-            previous_poses[finger] = copy.copy(cur_pose)
+            cur_frames.append(cur_frame)
+            cur_poses.append(cur_pose)
+            previous_poses.append(copy.copy(cur_pose))
 
         # Each iteration of this loop attempts to reduce the error between the site's
         # position and the target position.
         for _ in range(max_steps):
             twists = []
-            for finger, target_position in target_positions.items():
+            for i, target_position in enumerate(target_positions):
                 twist = _compute_twist(
-                    cur_poses[finger],
+                    cur_poses[i],
                     geometry.Pose(position=target_position, quaternion=None),
                     _LINEAR_VELOCITY_GAIN,
                     _INTEGRATION_TIMESTEP_SEC,
@@ -242,9 +177,9 @@ class IKSolver:
             close_enough: bool = True
             not_enough_progress: bool = False
 
-            for finger, target_position in target_positions.items():
+            for i, target_position in enumerate(target_positions):
                 # Get the distance between the current pose and the target pose.
-                cur_pose = cur_frames[finger].get_world_pose(self._geometry_physics)
+                cur_pose = cur_frames[i].get_world_pose(self._geometry_physics)
                 linear_err = float(np.linalg.norm(target_position - cur_pose.position))
                 avg_linear_err += linear_err
 
@@ -253,15 +188,15 @@ class IKSolver:
                     close_enough = False
 
                 # Stop the solve if not enough progress is being made.
-                previous_pose = previous_poses[finger]
+                previous_pose = previous_poses[i]
                 linear_change = np.linalg.norm(
                     cur_pose.position - previous_pose.position
                 )
                 if linear_err / (linear_change + 1e-10) > _PROGRESS_THRESHOLD:
                     not_enough_progress = True
 
-                previous_poses[finger] = copy.copy(cur_pose)
-                cur_poses[finger] = cur_pose
+                previous_poses[i] = copy.copy(cur_pose)
+                cur_poses[i] = cur_pose
 
             # Average out the linear error.
             avg_linear_err /= len(target_positions)

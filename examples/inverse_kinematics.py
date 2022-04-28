@@ -53,7 +53,7 @@ def main(_) -> None:
         xyaxes=cameras.FRONT_CLOSE.xyaxes,
     )
 
-    solver = ik_solver.IKSolver(model=arena.mjcf_model, prefix=hand.mjcf_model.model)
+    solver = ik_solver.IKSolver(hand=hand)
 
     # Create target sites for each fingertip.
     target_sites = []
@@ -86,12 +86,10 @@ def main(_) -> None:
         physics.bind(hand.joints).qpos[:] = qpos_desired
 
         # Forward kinematics to compute Cartesian fingertip positions.
-        target_positions = {}
-        for finger, fingertip_site in hand._fingertip_site_elem_mapping.items():
-            target_positions[finger] = physics.bind(fingertip_site).xpos.copy()
+        target_positions = physics.bind(hand.fingertip_sites).xpos.copy()
 
         # Set target sites to their respective locations.
-        physics.bind(target_sites).pos = np.array(list(target_positions.values()))
+        physics.bind(target_sites).pos = target_positions
 
         # Restore joints to their initial configuration.
         physics.bind(hand.joints).qpos[:] = qpos_initial

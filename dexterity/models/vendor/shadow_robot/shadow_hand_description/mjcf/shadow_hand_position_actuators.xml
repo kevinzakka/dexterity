@@ -1,21 +1,6 @@
-<mujoco model="shadow_hand">
+<mujocoinclude>
     <compiler angle="radian"/>
 
-    <!-- Default values for actuators are:
-        kp: 1
-        ctrllimited: false
-        forcelimited: false
-     -->
-    <default class="actuator">
-        <position ctrllimited="true" forcelimited="false" />
-    </default>
-
-    <!-- Fixed tendon:
-        An abstract tendon whose length is defined as a linear combination of joint
-        positions.
-        With coeff=1 for both *FJ0 and *FJ1, the tendon's length is going to be their
-        sum.
-    -->
     <tendon>
         <fixed name="FFT1">
             <joint joint="FFJ0" coef="1"/>
@@ -35,13 +20,6 @@
         </fixed>
     </tendon>
 
-    <!--
-        <position> creates a position servo, aka an actuator with a P controller.
-        It exposes a `kp` parameter, which is the position feedback gain.
-
-        At the moment, I don't know how to set these values and if it even matters
-        if I'm going to be controlling
-     -->
     <actuator>
         <!-- Wrist. -->
         <position name="A_WRJ1" class="actuator" joint="WRJ1" ctrlrange="-0.488692 0.139626" forcerange="-10.0 10.0" kp="20" />
@@ -75,4 +53,4 @@
         <position name="A_THJ1" class="actuator" joint="THJ1" ctrlrange="-0.5235987755982988 0.5235987755982988" forcerange="-2.0 2.0" kp="3.0" />
         <position name="A_THJ0" class="actuator" joint="THJ0" ctrlrange="0.0 1.5707963267948966" forcerange="-2.0 2.0" kp="3.0" />
     </actuator>
-</mujoco>
+</mujocoinclude>

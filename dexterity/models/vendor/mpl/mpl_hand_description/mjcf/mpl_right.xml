@@ -26,7 +26,7 @@
         <headlight diffuse="0.6 0.6 0.6" specular="0 0 0"/>
         <map fogstart="6"/>
     </visual>
-    <default class="main">
+    <default>
         <default class="MPL">
             <joint limited="true" armature="0.01" damping="0.2"/>
             <geom condim="4" margin="0.001" material="MatMesh"/>

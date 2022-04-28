@@ -1,5 +1,4 @@
 import abc
-import enum
 from typing import List
 
 import numpy as np
@@ -9,14 +8,8 @@ from dm_control.composer.observation import observable
 from dm_robotics.transformations import transformations as tr
 
 from dexterity.hints import MjcfElement
+from dexterity.models.hands import dexterous_hand_constants as consts
 from dexterity.utils import mujoco_utils
-
-
-class HandSide(enum.Enum):
-    """The side of the hand being modeled."""
-
-    LEFT = enum.auto()
-    RIGHT = enum.auto()
 
 
 class DexterousHand(abc.ABC, composer.Entity):
@@ -25,9 +18,19 @@ class DexterousHand(abc.ABC, composer.Entity):
     def _build_observables(self) -> composer.Observables:
         return DexterousHandObservables(self)
 
-    @abc.abstractmethod
-    def _build(self) -> None:
-        """Entity initialization method to be overridden by subclasses."""
+    @property
+    def num_joints(self) -> int:
+        return len(self._joints)
+
+    @property
+    def num_actuators(self) -> int:
+        return len(self._actuators)
+
+    @property
+    def underactuated(self) -> bool:
+        return self.num_joints > self._num_actuators
+
+    # Abstract properties.
 
     @property
     @abc.abstractmethod
@@ -41,13 +44,19 @@ class DexterousHand(abc.ABC, composer.Entity):
 
     @property
     @abc.abstractmethod
-    def actuators(self) -> List[MjcfElement]:
-        """List of actuator elements belonging to the hand."""
+    def joint_groups(self) -> List[consts.JointGrouping]:
+        """A list of `JointGrouping` objects corresponding to hand parts."""
+        ...
 
     @property
     @abc.abstractmethod
     def joints(self) -> List[MjcfElement]:
         """List of joint elements belonging to the hand."""
+
+    @property
+    @abc.abstractmethod
+    def actuators(self) -> List[MjcfElement]:
+        """List of actuator elements belonging to the hand."""
 
     @property
     @abc.abstractmethod
@@ -58,6 +67,12 @@ class DexterousHand(abc.ABC, composer.Entity):
     @abc.abstractmethod
     def joint_torque_sensors(self) -> List[MjcfElement]:
         """List of joint torque sensor elements belonging to the hand."""
+
+    # Abstract methods.
+
+    @abc.abstractmethod
+    def _build(self) -> None:
+        """Entity initialization method to be overridden by subclasses."""
 
     @abc.abstractmethod
     def control_to_joint_positions(self, control: np.ndarray) -> np.ndarray:

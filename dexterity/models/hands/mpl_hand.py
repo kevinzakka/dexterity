@@ -6,8 +6,11 @@ from dm_control import mjcf
 
 from dexterity.hints import MjcfElement
 from dexterity.models.hands import dexterous_hand
+from dexterity.models.hands import dexterous_hand_constants
 from dexterity.models.hands import mpl_hand_constants as consts
 from dexterity.utils import mujoco_utils
+
+HandSide = dexterous_hand_constants.HandSide
 
 
 class MPLHand(dexterous_hand.DexterousHand):
@@ -15,11 +18,11 @@ class MPLHand(dexterous_hand.DexterousHand):
 
     def _build(
         self,
-        side: dexterous_hand.HandSide = dexterous_hand.HandSide.RIGHT,
+        side: HandSide = HandSide.RIGHT,
         name: str = "mpl_hand",
     ) -> None:
 
-        if side == dexterous_hand.HandSide.RIGHT:
+        if side == HandSide.RIGHT:
             self._mjcf_root = mjcf.from_path(str(consts.MPL_HAND_RIGHT_XML))
             self._mjcf_root.model = f"right_{name}"
         else:
@@ -27,6 +30,7 @@ class MPLHand(dexterous_hand.DexterousHand):
             self._mjcf_root.model = f"left_{name}"
 
         self._parse_mjcf_elements()
+        self._add_sensors()
 
     def initialize_episode(
         self, physics: mjcf.Physics, random_state: np.random.RandomState
@@ -73,17 +77,28 @@ class MPLHand(dexterous_hand.DexterousHand):
         """List of fingertip site elements belonging to the hand."""
         return self._fingertip_sites
 
+    @property
+    def joint_groups(self) -> List[dexterous_hand_constants.JointGrouping]:
+        return self._joint_groups
+
     # ================= #
     # Public methods.
     # ================= #
 
     def control_to_joint_positions(self, control: np.ndarray) -> np.ndarray:
-        # The Adroit hand is fully-actuated, so ctrl = qpos.
-        return control
+        if control.shape != (self.num_actuators,):
+            raise ValueError(
+                f"Expected control of shape ({self.num_actuators}), got"
+                f" {control.shape}"
+            )
+        return consts.CONTROL_TO_POSITION @ control
 
     def joint_positions_to_control(self, qpos: np.ndarray) -> np.ndarray:
-        # The Adroit hand is fully-actuated, so ctrl = qpos.
-        return qpos
+        if qpos.shape != (self.num_joints,):
+            raise ValueError(
+                f"Expected qpos of shape ({self.num_joints}), got {qpos.shape}"
+            )
+        return consts.POSITION_TO_CONTROL @ qpos
 
     def set_joint_angles(self, physics: mjcf.Physics, joint_angles: np.ndarray) -> None:
         physics.bind(self._joints).qpos = joint_angles
@@ -91,7 +106,14 @@ class MPLHand(dexterous_hand.DexterousHand):
     def sample_joint_angles(
         self, physics: mjcf.Physics, random_state: np.random.RandomState
     ) -> np.ndarray:
-        return random_state.uniform(*physics.bind(self._joints).range.T)
+        qpos = random_state.uniform(*physics.bind(self._joints).range.T)
+
+        # Ensure coupled joints have the same joint values.
+        for coupled_ids in consts.COUPLED_JOINT_IDS:
+            val = qpos[coupled_ids[-1]]
+            qpos[coupled_ids] = val
+
+        return qpos
 
     # ================= #
     # Private methods.
@@ -99,19 +121,22 @@ class MPLHand(dexterous_hand.DexterousHand):
 
     def _parse_mjcf_elements(self) -> None:
         """Parses MJCF elements that will be exposed as attributes."""
-
+        # Parse joints.
         self._joints: List[mjcf.Element] = self._mjcf_root.find_all("joint")
         if not self._joints:
             raise ValueError("No joints found in the MJCF model.")
 
-        self._tendons: List[mjcf.Element] = self._mjcf_root.find_all("tendon")
-        if not self._tendons:
-            raise ValueError("No tendons found in the MJCF model.")
-
+        # Parse actuators.
         self._actuators: List[mjcf.Element] = self._mjcf_root.find_all("actuator")
         if not self._actuators:
             raise ValueError("No actuators found in the MJCF model.")
 
+        # Parse tendons.
+        self._tendons: List[mjcf.Element] = self._mjcf_root.find_all("tendon")
+        if not self._tendons:
+            raise ValueError("No tendons found in the MJCF model.")
+
+        # Parse fingertip sites.
         self._fingertip_sites: List[mjcf.Element] = []
         for fingertip_site_name in consts.FINGERTIP_SITE_NAMES:
             fingertip_site_elem = self._mjcf_root.find("site", fingertip_site_name)
@@ -121,6 +146,21 @@ class MPLHand(dexterous_hand.DexterousHand):
                 )
             self._fingertip_sites.append(fingertip_site_elem)
 
+        # Create joint groups.
+        self._joint_groups = []
+        for name, group in consts.JOINT_GROUP.items():
+            joint_group = dexterous_hand_constants.JointGrouping(
+                name=name,
+                joints=tuple([joint for joint in self._joints if joint.name in group]),
+            )
+            self._joint_groups.append(joint_group)
+
+    def _add_sensors(self) -> None:
+        """Add sensors to the hand's MJCF model."""
+
+        self._add_torque_sensors()
+
+    def _add_torque_sensors(self) -> None:
         self._joint_torque_sensors: List[mjcf.Element] = []
         for joint_elem in self._joints:
             site_elem = joint_elem.parent.add(
