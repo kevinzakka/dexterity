@@ -14,6 +14,8 @@ from dexterity.utils import mujoco_utils
 
 
 class HandSide(enum.Enum):
+    """Which hand side is being modeled."""
+
     LEFT = enum.auto()
     RIGHT = enum.auto()
 
