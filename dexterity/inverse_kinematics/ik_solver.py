@@ -48,13 +48,11 @@ class IKSolver:
         self._physics = mjcf.Physics.from_mjcf_model(hand.mjcf_model.root_model)
         self._geometry_physics = mujoco_physics.wrap(self._physics)
 
-        self._elements = hand.fingertip_sites
-        self._joint_groups = hand.joint_groups
-
         # Get joint bindings.
+        self._elements = hand.fingertip_sites
         self._all_joints_binding = self._physics.bind(hand.joints)
         self._joint_bindings = []
-        for joint_group in self._joint_groups:
+        for joint_group in hand.joint_groups:
             joint_binding = self._physics.bind(joint_group.joints)
             self._joint_bindings.append(joint_binding)
 
