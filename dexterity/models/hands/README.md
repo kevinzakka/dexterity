@@ -32,3 +32,9 @@ A modified version of the Shadow Hand which makes it fully-actuated. Modified fr
 * Modified the color of the hand.
 * Decreased the kp values of the actuators.
 * Removed non-hand related bodies.
+
+## Modular Prosthetic Limb (MPL) Hand
+
+<p float="left">
+  <img src="mpl.png" height="300">
+</p>
