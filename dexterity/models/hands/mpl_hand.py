@@ -6,11 +6,10 @@ from dm_control import mjcf
 
 from dexterity.hints import MjcfElement
 from dexterity.models.hands import dexterous_hand
-from dexterity.models.hands import dexterous_hand_constants
 from dexterity.models.hands import mpl_hand_constants as consts
 from dexterity.utils import mujoco_utils
 
-HandSide = dexterous_hand_constants.HandSide
+HandSide = dexterous_hand.HandSide
 
 
 class MPLHand(dexterous_hand.DexterousHand):
@@ -78,7 +77,7 @@ class MPLHand(dexterous_hand.DexterousHand):
         return self._fingertip_sites
 
     @property
-    def joint_groups(self) -> List[dexterous_hand_constants.JointGrouping]:
+    def joint_groups(self) -> List[dexterous_hand.JointGrouping]:
         return self._joint_groups
 
     # ================= #
@@ -149,7 +148,7 @@ class MPLHand(dexterous_hand.DexterousHand):
         # Create joint groups.
         self._joint_groups = []
         for name, group in consts.JOINT_GROUP.items():
-            joint_group = dexterous_hand_constants.JointGrouping(
+            joint_group = dexterous_hand.JointGrouping(
                 name=name,
                 joints=tuple([joint for joint in self._joints if joint.name in group]),
             )

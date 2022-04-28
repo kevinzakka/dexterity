@@ -16,7 +16,6 @@ from dexterity.manipulation.shared import observations
 from dexterity.manipulation.shared import tags
 from dexterity.models import arenas
 from dexterity.models.hands import dexterous_hand
-from dexterity.models.hands import dexterous_hand_constants
 from dexterity.models.hands import mpl_hand
 
 # The orientation of the hand relative to the world frame.
@@ -157,7 +156,7 @@ def juggle_task(
     arena = arenas.Standard()
 
     left_hand = mpl_hand.MPLHand(
-        side=dexterous_hand_constants.HandSide.LEFT,
+        side=dexterous_hand.HandSide.LEFT,
         observable_options=observations.make_options(
             observation_set.value,
             observations.HAND_OBSERVABLES,
@@ -166,7 +165,7 @@ def juggle_task(
     left_hand_effector = effectors.HandEffector(left_hand, left_hand.name)
 
     right_hand = mpl_hand.MPLHand(
-        side=dexterous_hand_constants.HandSide.RIGHT,
+        side=dexterous_hand.HandSide.RIGHT,
         observable_options=observations.make_options(
             observation_set.value,
             observations.HAND_OBSERVABLES,

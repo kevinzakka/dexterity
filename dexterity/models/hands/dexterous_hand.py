@@ -1,5 +1,7 @@
 import abc
-from typing import List
+import dataclasses
+import enum
+from typing import List, Tuple
 
 import numpy as np
 from dm_control import composer
@@ -8,8 +10,24 @@ from dm_control.composer.observation import observable
 from dm_robotics.transformations import transformations as tr
 
 from dexterity.hints import MjcfElement
-from dexterity.models.hands import dexterous_hand_constants as consts
 from dexterity.utils import mujoco_utils
+
+
+class HandSide(enum.Enum):
+    LEFT = enum.auto()
+    RIGHT = enum.auto()
+
+
+@dataclasses.dataclass(frozen=True)
+class JointGrouping:
+    """A collection of joints belonging to a hand part (wrist or finger)."""
+
+    name: str
+    joints: Tuple[MjcfElement, ...]
+
+    @property
+    def joint_names(self) -> Tuple[str, ...]:
+        return tuple([joint.name for joint in self.joints])
 
 
 class DexterousHand(abc.ABC, composer.Entity):
@@ -44,9 +62,8 @@ class DexterousHand(abc.ABC, composer.Entity):
 
     @property
     @abc.abstractmethod
-    def joint_groups(self) -> List[consts.JointGrouping]:
+    def joint_groups(self) -> List[JointGrouping]:
         """A list of `JointGrouping` objects corresponding to hand parts."""
-        ...
 
     @property
     @abc.abstractmethod
