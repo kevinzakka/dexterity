@@ -40,7 +40,7 @@ class CartesianVelocitytoJointVelocityMapper(abc.ABC):
         """Maps the Cartesian target velocity to joint velocities."""
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Parameters:
     """Container for `CartesianVelocitytoJointVelocityMapper` parameters."""
 

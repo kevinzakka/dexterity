@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Optional, Sequence
+from typing import List, Optional, Sequence
 
 import numpy as np
 
@@ -8,7 +8,7 @@ from dexterity.controllers import mapper
 from dexterity.utils import mujoco_utils
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class DampedLeastSquaresParameters(mapper.Parameters):
 
     regularization_weight: float
@@ -51,7 +51,8 @@ class DampedLeastSquaresMapper(mapper.CartesianVelocitytoJointVelocityMapper):
     ) -> np.ndarray:
         del nullspace_bias
 
-        jacobians = []
+        # Compute and concatenate the Jacobian matrices for each end-effector.
+        jacobians: List[np.ndarray] = []
         for obj_type, obj_name in zip(
             self.params.object_types, self.params.object_names
         ):
@@ -61,21 +62,10 @@ class DampedLeastSquaresMapper(mapper.CartesianVelocitytoJointVelocityMapper):
                 object_type=obj_type,
                 object_id=self.params.model.name2id(obj_name, obj_type),
             )
-
-            # TODO(kevin): This logic is specific to the Shadow Hand and should be
-            # abstracted out for other hands.
-            # Underactuation correction.
-            avg = 0.5 * (jacobian[:, 4] + jacobian[:, 5])
-            jacobian[:, 4] = jacobian[:, 5] = avg
-            avg = 0.5 * (jacobian[:, 8] + jacobian[:, 9])
-            jacobian[:, 8] = jacobian[:, 9] = avg
-            avg = 0.5 * (jacobian[:, 12] + jacobian[:, 13])
-            jacobian[:, 12] = jacobian[:, 13] = avg
-            avg = 0.5 * (jacobian[:, 17] + jacobian[:, 18])
-            jacobian[:, 17] = jacobian[:, 18] = avg
-
             jacobians.append(jacobian[:3])
         jacobian = np.concatenate(jacobians, axis=0)
+
+        # Concatenate twists for each end-effector.
         twist = np.concatenate(target_velocities, axis=0)
 
         # Solve!

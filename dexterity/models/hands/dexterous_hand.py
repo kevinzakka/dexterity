@@ -11,6 +11,7 @@ from dm_robotics.transformations import transformations as tr
 
 from dexterity.hints import FloatArray
 from dexterity.hints import MjcfElement
+from dexterity.utils import mujoco_collisions
 from dexterity.utils import mujoco_utils
 
 _DEFAULT_XPOS = (0.0, 0.0, 0.0)
@@ -109,6 +110,24 @@ class DexterousHand(composer.Entity, abc.ABC):
     def tendons(self) -> List[MjcfElement]:
         raise NotImplementedError
 
+    def sample_collision_free_joint_angles(
+        self, physics: mjcf.Physics, random_state: np.random.RandomState
+    ) -> np.ndarray:
+        """Samples a collision-free joint configuration."""
+        qpos_init = physics.bind(self.joints).qpos.copy()
+
+        while True:
+            qpos = self.sample_joint_angles(physics, random_state)
+            self.set_joint_angles(physics, qpos)
+            physics.forward()
+            if not mujoco_collisions.has_self_collision(physics, self.name):
+                break
+
+        # Restore initial joint configuration.
+        self.set_joint_angles(physics, qpos_init)
+
+        return qpos
+
     # Abstract properties.
 
     @property
@@ -187,7 +206,10 @@ class DexterousHand(composer.Entity, abc.ABC):
     def sample_joint_angles(
         self, physics: mjcf.Physics, random_state: np.random.RandomState
     ) -> np.ndarray:
-        """Samples a random joint configuration for the hand."""
+        """Samples a random joint configuration for the hand.
+
+        This is not guaranteed to be collision-free.
+        """
 
 
 class DexterousHandObservables(composer.Observables):

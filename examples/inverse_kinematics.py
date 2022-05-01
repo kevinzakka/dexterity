@@ -6,7 +6,6 @@ import numpy as np
 from absl import app
 from absl import flags
 from dm_control import mjcf
-from dm_robotics.transformations import transformations as tr
 from matplotlib import pyplot as plt
 
 from dexterity.inverse_kinematics import ik_solver
@@ -15,7 +14,7 @@ from dexterity.manipulation.shared import workspaces
 from dexterity.models import hands
 from dexterity.models.arenas import Arena
 
-flags.DEFINE_integer("seed", None, "Random seed.")
+flags.DEFINE_integer("seed", 0, "Random seed.")
 flags.DEFINE_integer("num_solves", 1, "Number of IK solves.")
 flags.DEFINE_float("linear_tol", 1e-4, "Linear tolerance.")
 flags.DEFINE_boolean("disable_plot", False, "Angular tolerance.")
@@ -40,10 +39,12 @@ def main(_) -> None:
 
     # Build the scene.
     arena = Arena()
-    axis_angle = np.radians(180) * np.array([0, np.sqrt(2) / 2, -np.sqrt(2) / 2])
-    quat = tr.axisangle_to_quat(axis_angle)
     hand = hands.ShadowHandSeriesE()
-    arena.attach_offset(hand, position=(0, 0.2, 0.1), quaternion=quat)
+    arena.attach_offset(
+        hand,
+        position=hand.palm_upright_pose.xpos,
+        quaternion=hand.palm_upright_pose.xquat,
+    )
 
     # Add camera.
     arena.mjcf_model.worldbody.add(
@@ -81,7 +82,7 @@ def main(_) -> None:
         physics = mjcf.Physics.from_mjcf_model(arena.mjcf_model)
 
         # Randomly sample a joint configuration.
-        qpos_desired = hand.sample_joint_angles(physics, random_state)
+        qpos_desired = hand.sample_collision_free_joint_angles(physics, random_state)
         qpos_initial = physics.bind(hand.joints).qpos.copy()
         physics.bind(hand.joints).qpos[:] = qpos_desired
 

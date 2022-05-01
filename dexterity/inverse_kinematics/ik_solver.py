@@ -1,8 +1,7 @@
 # TODO(kevin): In the future, we'd like to solve for finger orientation as well.
 
 import copy
-import dataclasses
-from typing import List, Optional, Sequence
+from typing import List, NamedTuple, Optional, Sequence
 
 import mujoco
 import numpy as np
@@ -32,8 +31,7 @@ _REGULARIZATION_WEIGHT = 1e-5
 _PROGRESS_THRESHOLD = 20.0
 
 
-@dataclasses.dataclass
-class _Solution:
+class _Solution(NamedTuple):
     """Return value of an IK solution."""
 
     qpos: np.ndarray
@@ -105,22 +103,22 @@ class IKSolver:
                     *self._all_joints_binding.range.T
                 )
 
-            solution = self._solve_ik(
+            qpos, linear_err = self._solve_ik(
                 target_positions,
                 linear_tol,
                 max_steps,
                 early_stop,
             )
 
-            if solution.linear_err <= linear_tol:
+            if linear_err <= linear_tol:
                 success = True
 
                 nullspace_jnt_qpos_err = float(
-                    np.linalg.norm(solution.qpos - self._nullspace_reference)
+                    np.linalg.norm(qpos - self._nullspace_reference)
                 )
                 if nullspace_jnt_qpos_err < nullspace_jnt_qpos_min_err:
                     nullspace_jnt_qpos_min_err = nullspace_jnt_qpos_err
-                    sol_qpos = solution.qpos
+                    sol_qpos = qpos
 
             if success and stop_on_first_successful_attempt:
                 break
@@ -137,7 +135,6 @@ class IKSolver:
         max_steps: int,
         early_stop: bool,
     ) -> _Solution:
-        """Solves for a joint configuration that brings element pose to target pose."""
         cur_frames: List[geometry.PoseStamped] = []
         cur_poses: List[geometry.Pose] = []
         previous_poses: List[geometry.Pose] = []
@@ -200,12 +197,10 @@ class IKSolver:
             avg_linear_err /= len(target_positions)
 
             # Break conditions.
-            if early_stop and close_enough:
-                break
-            if not_enough_progress:
+            if (early_stop and close_enough) or not_enough_progress:
                 break
 
-        qpos = np.array(self._all_joints_binding.qpos, copy=True)
+        qpos = np.array(self._all_joints_binding.qpos)
         return _Solution(qpos=qpos, linear_err=avg_linear_err)
 
     def _compute_joint_velocities(
@@ -222,9 +217,7 @@ class IKSolver:
         """Updates the physics data following the integration of velocities."""
         # Clip joint positions.
         qpos = self._all_joints_binding.qpos
-        min_range = self._all_joints_binding.range[:, 0]
-        max_range = self._all_joints_binding.range[:, 1]
-        qpos = np.clip(qpos, min_range, max_range)
+        qpos = np.clip(qpos, *self._all_joints_binding.range.T)
         self._all_joints_binding.qpos[:] = qpos
 
         # Forward kinematics to update the pose of the tracked site.
