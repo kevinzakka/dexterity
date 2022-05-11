@@ -1,7 +1,7 @@
 import abc
 import dataclasses
 import enum
-from typing import Callable, List, Optional, Sequence, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import numpy as np
 from dm_control import composer
@@ -76,7 +76,7 @@ class DexterousHand(composer.Entity, abc.ABC):
     """Base composer class for a dexterous multi-fingered hand."""
 
     def _build(self) -> None:
-        self._fingers_pos_sensors: List[MjcfElement] = []
+        self._fingers_pos_sensors: Tuple[MjcfElement, ...] = ()
 
     def _build_observables(self) -> composer.Observables:
         return DexterousHandObservables(self)
@@ -110,11 +110,11 @@ class DexterousHand(composer.Entity, abc.ABC):
         return self.num_actuators < self.num_joints
 
     @property
-    def fingers_pos_sensors(self) -> Sequence[MjcfElement]:
+    def fingers_pos_sensors(self) -> Tuple[MjcfElement, ...]:
         return self._fingers_pos_sensors
 
     @property
-    def tendons(self) -> Sequence[MjcfElement]:
+    def tendons(self) -> Tuple[MjcfElement, ...]:
         raise NotImplementedError
 
     def sample_joint_angles(
@@ -189,32 +189,32 @@ class DexterousHand(composer.Entity, abc.ABC):
 
     @property
     @abc.abstractmethod
-    def bodies(self) -> Sequence[MjcfElement]:
+    def bodies(self) -> Tuple[MjcfElement, ...]:
         """List of bodies belonging to the hand."""
 
     @property
     @abc.abstractmethod
-    def joints(self) -> Sequence[MjcfElement]:
+    def joints(self) -> Tuple[MjcfElement, ...]:
         """List of joint elements belonging to the hand."""
 
     @property
     @abc.abstractmethod
-    def actuators(self) -> Sequence[MjcfElement]:
+    def actuators(self) -> Tuple[MjcfElement, ...]:
         """List of actuator elements belonging to the hand."""
 
     @property
     @abc.abstractmethod
-    def fingertip_sites(self) -> Sequence[MjcfElement]:
+    def fingertip_sites(self) -> Tuple[MjcfElement, ...]:
         """List of fingertip site elements belonging to the hand."""
 
     @property
     @abc.abstractmethod
-    def joint_torque_sensors(self) -> Sequence[MjcfElement]:
+    def joint_torque_sensors(self) -> Tuple[MjcfElement, ...]:
         """List of joint torque sensor elements belonging to the hand."""
 
     @property
     @abc.abstractmethod
-    def joint_groups(self) -> Sequence[JointGrouping]:
+    def joint_groups(self) -> Tuple[JointGrouping, ...]:
         """A list of `JointGrouping` objects corresponding to hand parts."""
 
     # Abstract methods.
@@ -328,9 +328,9 @@ class DexterousHandObservables(composer.Observables):
     def fingertip_positions_ego(self):
         """3D position of the fingers, relative to the root, in the egocentric frame."""
 
-        self._entity.fingers_pos_sensors[:] = []
+        fingers_pos_sensors = []
         for fingertip_site in self._entity.fingertip_sites:
-            self._entity.fingers_pos_sensors.append(
+            fingers_pos_sensors.append(
                 self._entity.mjcf_model.sensor.add(
                     "framepos",
                     name=fingertip_site.name + "_pos_sensor",
@@ -340,6 +340,7 @@ class DexterousHandObservables(composer.Observables):
                     refname=self._entity.root_body,
                 )
             )
+        self._entity._fingers_pos_sensors = fingers_pos_sensors
 
         def _get_relative_pos_in_egocentric_frame(physics: mjcf.Physics) -> np.ndarray:
             return np.reshape(

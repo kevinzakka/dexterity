@@ -1,4 +1,4 @@
-from typing import List, Sequence
+from typing import Tuple
 
 import numpy as np
 from dm_control import composer
@@ -62,31 +62,31 @@ class ShadowHandSeriesE(dexterous_hand.DexterousHand):
         return self._mjcf_root.find("body", "forearm")
 
     @composer.cached_property
-    def bodies(self) -> Sequence[MjcfElement]:
+    def bodies(self) -> Tuple[MjcfElement, ...]:
         return tuple(self.mjcf_model.find_all("body"))
 
     @property
-    def joints(self) -> Sequence[MjcfElement]:
+    def joints(self) -> Tuple[MjcfElement, ...]:
         return self._joints
 
     @property
-    def actuators(self) -> Sequence[MjcfElement]:
+    def actuators(self) -> Tuple[MjcfElement, ...]:
         return self._actuators
 
     @property
-    def tendons(self) -> Sequence[MjcfElement]:
+    def tendons(self) -> Tuple[MjcfElement, ...]:
         return self._tendons
 
     @property
-    def joint_torque_sensors(self) -> Sequence[MjcfElement]:
+    def joint_torque_sensors(self) -> Tuple[MjcfElement, ...]:
         return self._joint_torque_sensors
 
     @property
-    def fingertip_sites(self) -> Sequence[MjcfElement]:
+    def fingertip_sites(self) -> Tuple[MjcfElement, ...]:
         return self._fingertip_sites
 
     @property
-    def joint_groups(self) -> List[dexterous_hand.JointGrouping]:
+    def joint_groups(self) -> Tuple[dexterous_hand.JointGrouping, ...]:
         return self._joint_groups
 
     # ================= #
@@ -134,33 +134,36 @@ class ShadowHandSeriesE(dexterous_hand.DexterousHand):
     def _parse_mjcf_elements(self) -> None:
         """Parses MJCF elements that will be exposed as attributes."""
         # Parse joints.
-        self._joints = self._mjcf_root.find_all("joint")
-        if not self._joints:
+        joints = self._mjcf_root.find_all("joint")
+        if not joints:
             raise ValueError("No joints found in the MJCF model.")
+        self._joints = tuple(joints)
 
         # Parse actuators.
-        self._actuators = self._mjcf_root.find_all("actuator")
-        if not self._actuators:
+        actuators = self._mjcf_root.find_all("actuator")
+        if not actuators:
             raise ValueError("No actuators found in the MJCF model.")
+        self._actuators = tuple(actuators)
 
         # Parse tendons.
-        self._tendons = self._mjcf_root.find_all("tendon")
-        if not self._tendons:
+        tendons = self._mjcf_root.find_all("tendon")
+        if not tendons:
             raise ValueError("No tendons found in the MJCF model.")
+        self._tendons = tuple(tendons)
 
         # Create joint groups.
-        self._joint_groups = []
+        joint_groups = []
         for name, group in consts.JOINT_GROUP.items():
             joint_group = dexterous_hand.JointGrouping(
                 name=name,
                 joints=tuple([joint for joint in self._joints if joint.name in group]),
             )
-            self._joint_groups.append(joint_group)
+            joint_groups.append(joint_group)
+        self._joint_groups = tuple(joint_groups)
 
     def _add_fingertip_sites(self) -> None:
         """Adds sites to the tips of the fingers of the hand."""
-        self._fingertip_sites: List[mjcf.Element] = []
-
+        fingertip_sites = []
         for tip_name in consts.FINGERTIP_NAMES:
             tip_elem = self._mjcf_root.find("body", tip_name)
             if tip_elem is None:
@@ -175,7 +178,8 @@ class ShadowHandSeriesE(dexterous_hand.DexterousHand):
                 rgba="1 0 0 1",
                 group=composer.SENSOR_SITES_GROUP,
             )
-            self._fingertip_sites.append(tip_site)
+            fingertip_sites.append(tip_site)
+        self._fingertip_sites = tuple(fingertip_sites)
 
     def _add_sensors(self) -> None:
         """Add sensors to the hand's MJCF model."""
@@ -184,8 +188,7 @@ class ShadowHandSeriesE(dexterous_hand.DexterousHand):
 
     def _add_torque_sensors(self) -> None:
         """Adds torque sensors to the joints of the hand."""
-        self._joint_torque_sensors = []
-
+        joint_torque_sensors = []
         for joint_elem in self._joints:
             site_elem = joint_elem.parent.add(
                 "site",
@@ -202,4 +205,5 @@ class ShadowHandSeriesE(dexterous_hand.DexterousHand):
                 site=site_elem,
                 name=joint_elem.name + "_torque",
             )
-            self._joint_torque_sensors.append(torque_sensor_elem)
+            joint_torque_sensors.append(torque_sensor_elem)
+        self._joint_torque_sensors = tuple(joint_torque_sensors)
