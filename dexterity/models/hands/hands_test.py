@@ -1,5 +1,5 @@
 import itertools
-from typing import Tuple
+from typing import Callable, Tuple
 
 import numpy as np
 from absl.testing import absltest
@@ -9,10 +9,14 @@ from dm_control import mjcf
 from dexterity.inverse_kinematics import ik_solver
 from dexterity.models.hands import adroit_hand
 from dexterity.models.hands import adroit_hand_constants
+from dexterity.models.hands import dexterous_hand
 from dexterity.models.hands import mpl_hand
 from dexterity.models.hands import mpl_hand_constants
 from dexterity.models.hands import shadow_hand_e
 from dexterity.models.hands import shadow_hand_e_constants
+from dexterity.utils import mujoco_collisions
+
+HandCls = Callable[[], dexterous_hand.DexterousHand]
 
 
 @parameterized.named_parameters(
@@ -45,46 +49,46 @@ class ConstantsTest(absltest.TestCase):
     },
 )
 class HandTest(parameterized.TestCase):
-    def test_can_compile_and_step_model(self, hand_cls, constants) -> None:
+    def test_can_compile_and_step_model(self, hand_cls: HandCls, constants) -> None:
         del constants  # Unused.
         hand = hand_cls()
         physics = mjcf.Physics.from_mjcf_model(hand.mjcf_model)
         for _ in range(100):
             physics.step()
 
-    def test_initialize_episode(self, hand_cls, constants) -> None:
+    def test_initialize_episode(self, hand_cls: HandCls, constants) -> None:
         del constants  # Unused.
         hand = hand_cls()
         physics = mjcf.Physics.from_mjcf_model(hand.mjcf_model)
         hand.initialize_episode(physics, np.random.RandomState(0))
 
-    def test_joints(self, hand_cls, constants) -> None:
+    def test_joints(self, hand_cls: HandCls, constants) -> None:
         hand = hand_cls()
         self.assertLen(hand.joints, constants.NUM_JOINTS)
         for joint in hand.joints:
             self.assertEqual(joint.tag, "joint")
 
-    def test_actuators(self, hand_cls, constants) -> None:
+    def test_actuators(self, hand_cls: HandCls, constants) -> None:
         hand = hand_cls()
         self.assertLen(hand.actuators, constants.NUM_ACTUATORS)
         for actuator in hand.actuators:
             self.assertIn(actuator.tag, ["general", "position"])
 
-    def test_raises_when_control_wrong_len(self, hand_cls, constants) -> None:
+    def test_raises_when_control_wrong_len(self, hand_cls: HandCls, constants) -> None:
         del constants  # Unused.
         hand = hand_cls()
         control = np.array([0.0])
         with self.assertRaises(ValueError):
             hand.control_to_joint_positions(control)
 
-    def test_raises_when_qpos_wrong_len(self, hand_cls, constants) -> None:
+    def test_raises_when_qpos_wrong_len(self, hand_cls: HandCls, constants) -> None:
         del constants  # Unused.
         hand = hand_cls()
         qpos = np.array([0.0])
         with self.assertRaises(ValueError):
             hand.joint_positions_to_control(qpos)
 
-    def test_set_joint_angles(self, hand_cls, constants) -> None:
+    def test_set_joint_angles(self, hand_cls: HandCls, constants) -> None:
         del constants  # Unused.
         hand = hand_cls()
         physics = mjcf.Physics.from_mjcf_model(hand.mjcf_model)
@@ -92,6 +96,18 @@ class HandTest(parameterized.TestCase):
         hand.set_joint_angles(physics, rand_qpos)
         physics_joints_qpos = physics.bind(hand.joints).qpos
         np.testing.assert_array_equal(physics_joints_qpos, rand_qpos)
+
+    def test_sample_collision_free_joint_angles(
+        self, hand_cls: HandCls, constants
+    ) -> None:
+        del constants  # Unused.
+        hand = hand_cls()
+        random_state = np.random.RandomState(12345)
+        physics = mjcf.Physics.from_mjcf_model(hand.mjcf_model)
+        for _ in range(50):
+            rand_qpos = hand.sample_collision_free_joint_angles(physics, random_state)
+            hand.set_joint_angles(physics, rand_qpos)
+            self.assertFalse(mujoco_collisions.has_self_collision(physics, hand.name))
 
 
 class DexterousHandObservablesTest(parameterized.TestCase):

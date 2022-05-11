@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List
 
 import numpy as np
 from dm_control import composer
@@ -57,8 +57,8 @@ class AdroitHand(dexterous_hand.DexterousHand):
         return self._mjcf_root.find("body", "forearm")
 
     @composer.cached_property
-    def bodies(self) -> Tuple[MjcfElement, ...]:
-        return tuple(self.mjcf_model.find_all("body"))
+    def bodies(self) -> List[MjcfElement]:
+        return self.mjcf_model.find_all("body")
 
     @property
     def joints(self) -> List[MjcfElement]:
@@ -110,8 +110,8 @@ class AdroitHand(dexterous_hand.DexterousHand):
         # The Adroit hand is fully-actuated, so ctrl = qpos.
         return qpos
 
-    def set_joint_angles(self, physics: mjcf.Physics, joint_angles: np.ndarray) -> None:
-        physics.bind(self._joints).qpos = joint_angles
+    def set_joint_angles(self, physics: mjcf.Physics, qpos: np.ndarray) -> None:
+        physics.bind(self._joints).qpos = qpos
 
     # ================= #
     # Private methods.

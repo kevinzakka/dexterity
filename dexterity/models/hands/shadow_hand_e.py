@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List
 
 import numpy as np
 from dm_control import composer
@@ -62,8 +62,8 @@ class ShadowHandSeriesE(dexterous_hand.DexterousHand):
         return self._mjcf_root.find("body", "forearm")
 
     @composer.cached_property
-    def bodies(self) -> Tuple[MjcfElement, ...]:
-        return tuple(self.mjcf_model.find_all("body"))
+    def bodies(self) -> List[MjcfElement]:
+        return self.mjcf_model.find_all("body")
 
     @property
     def joints(self) -> List[MjcfElement]:
@@ -117,11 +117,10 @@ class ShadowHandSeriesE(dexterous_hand.DexterousHand):
             )
         return consts.POSITION_TO_CONTROL @ qpos
 
-    def set_joint_angles(self, physics: mjcf.Physics, joint_angles: np.ndarray) -> None:
-        """Sets the joints of the hand to a given configuration."""
-        physics.bind(self._joints).qpos = joint_angles
+    def set_joint_angles(self, physics: mjcf.Physics, qpos: np.ndarray) -> None:
+        physics.bind(self._joints).qpos = qpos
 
-    def postprocess_sampled_joint_angles(self, qpos: np.ndarray) -> np.ndarray:
+    def _postprocess_sampled_joint_angles(self, qpos: np.ndarray) -> np.ndarray:
         # Ensure coupled joints have the same joint values.
         for coupled_ids in consts.COUPLED_JOINT_IDS:
             val = qpos[coupled_ids[-1]]
