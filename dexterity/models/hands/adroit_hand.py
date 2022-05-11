@@ -113,11 +113,6 @@ class AdroitHand(dexterous_hand.DexterousHand):
     def set_joint_angles(self, physics: mjcf.Physics, joint_angles: np.ndarray) -> None:
         physics.bind(self._joints).qpos = joint_angles
 
-    def sample_joint_angles(
-        self, physics: mjcf.Physics, random_state: np.random.RandomState
-    ) -> np.ndarray:
-        return random_state.uniform(*physics.bind(self._joints).range.T)
-
     # ================= #
     # Private methods.
     # ================= #

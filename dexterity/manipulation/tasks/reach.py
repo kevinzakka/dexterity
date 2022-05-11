@@ -35,6 +35,10 @@ _SITE_COLORS = (
 _TARGET_SIZE = 5e-3
 _TARGET_ALPHA = 1.0
 
+# Fraction of the full joint range to use when initializing the joints of the hand at
+# the start of every episode. Should be between 0 and 1.
+_INIT_JOINT_RANGE_FRACTION = 0.5
+
 _STEPS_BEFORE_MOVING_TARGET: int = 5
 
 # Threshold for the distance between a finger and its target below which we consider the
@@ -147,14 +151,11 @@ class Reach(task.GoalTask):
     ) -> None:
         super().initialize_episode(physics, random_state)
 
-        # Set the initial joint configuration to the midrange of the joint limits.
-        midrange = physics.bind(self.hand.joints).range.mean(axis=1)
-        physics.bind(self.hand.joints).qpos[:] = midrange
-
-        # Step the physics to move the fingers out of the way. Typically the pinky
-        # collides with the ring finger in this configuration.
-        for _ in range(2):
-            physics.step()
+        # Randomly initialize the joints of the hand.
+        qpos = self.hand.sample_collision_free_joint_angles(
+            physics, random_state, _INIT_JOINT_RANGE_FRACTION
+        )
+        self.hand.set_joint_angles(physics, qpos)
 
         positions = self._goal.reshape(5, 3)
         for i, target in enumerate(self._targets):

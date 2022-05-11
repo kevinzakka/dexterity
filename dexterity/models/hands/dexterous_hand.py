@@ -110,14 +110,41 @@ class DexterousHand(composer.Entity, abc.ABC):
     def tendons(self) -> List[MjcfElement]:
         raise NotImplementedError
 
+    def sample_joint_angles(
+        self,
+        physics: mjcf.Physics,
+        random_state: np.random.RandomState,
+        range_fraction: float = 1.0,
+    ) -> np.ndarray:
+        """Samples a random joint configuration for the hand.
+
+        This is not guaranteed to be collision-free.
+        """
+        if not 0 <= range_fraction <= 1:
+            raise ValueError("range_fraction must be between 0 and 1.")
+
+        bounds = range_fraction * physics.bind(self.joints).range
+        qpos = random_state.uniform(*bounds.T)
+        return self.postprocess_sampled_joint_angles(qpos)
+
+    def postprocess_sampled_joint_angles(self, qpos: np.ndarray) -> np.ndarray:
+        """Post-process a joint configuration that has been randomly sampled.
+
+        For fully-actuated hands, this is going to be a no-op.
+        """
+        return qpos
+
     def sample_collision_free_joint_angles(
-        self, physics: mjcf.Physics, random_state: np.random.RandomState
+        self,
+        physics: mjcf.Physics,
+        random_state: np.random.RandomState,
+        range_fraction: float = 1.0,
     ) -> np.ndarray:
         """Samples a collision-free joint configuration."""
         qpos_init = physics.bind(self.joints).qpos.copy()
 
         while True:
-            qpos = self.sample_joint_angles(physics, random_state)
+            qpos = self.sample_joint_angles(physics, random_state, range_fraction)
             self.set_joint_angles(physics, qpos)
             physics.forward()
             if not mujoco_collisions.has_self_collision(physics, self.name):
@@ -199,17 +226,6 @@ class DexterousHand(composer.Entity, abc.ABC):
     @abc.abstractmethod
     def set_joint_angles(self, physics: mjcf.Physics, joint_angles: np.ndarray) -> None:
         """Sets the joints of the hand to a given configuration."""
-
-    # Note: This method is abstract because a hand might have to perform extra logic
-    # pertaining to its underactuation after randomly sampling joint angles.
-    @abc.abstractmethod
-    def sample_joint_angles(
-        self, physics: mjcf.Physics, random_state: np.random.RandomState
-    ) -> np.ndarray:
-        """Samples a random joint configuration for the hand.
-
-        This is not guaranteed to be collision-free.
-        """
 
 
 class DexterousHandObservables(composer.Observables):

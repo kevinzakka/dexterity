@@ -111,16 +111,11 @@ class MPLHand(dexterous_hand.DexterousHand):
     def set_joint_angles(self, physics: mjcf.Physics, joint_angles: np.ndarray) -> None:
         physics.bind(self._joints).qpos = joint_angles
 
-    def sample_joint_angles(
-        self, physics: mjcf.Physics, random_state: np.random.RandomState
-    ) -> np.ndarray:
-        qpos = random_state.uniform(*physics.bind(self._joints).range.T)
-
+    def postprocess_sampled_joint_angles(self, qpos: np.ndarray) -> np.ndarray:
         # Ensure coupled joints have the same joint values.
         for coupled_ids in consts.COUPLED_JOINT_IDS:
             val = qpos[coupled_ids[-1]]
             qpos[coupled_ids] = val
-
         return qpos
 
     # ================= #
