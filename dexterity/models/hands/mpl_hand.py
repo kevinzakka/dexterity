@@ -7,6 +7,7 @@ from dm_control import mjcf
 from dexterity.hints import MjcfElement
 from dexterity.models.hands import dexterous_hand
 from dexterity.models.hands import mpl_hand_constants as consts
+from dexterity.utils import mjcf_utils
 from dexterity.utils import mujoco_utils
 
 HandSide = dexterous_hand.HandSide
@@ -58,7 +59,7 @@ class MPLHand(dexterous_hand.DexterousHand):
 
     @composer.cached_property
     def bodies(self) -> Tuple[MjcfElement, ...]:
-        return tuple(self.mjcf_model.find_all("body"))
+        return tuple(mjcf_utils.safe_find_all(self.mjcf_model, "body"))
 
     @property
     def joints(self) -> Tuple[MjcfElement, ...]:
@@ -124,23 +125,9 @@ class MPLHand(dexterous_hand.DexterousHand):
 
     def _parse_mjcf_elements(self) -> None:
         """Parses MJCF elements that will be exposed as attributes."""
-        # Parse joints.
-        joints = self._mjcf_root.find_all("joint")
-        if not joints:
-            raise ValueError("No joints found in the MJCF model.")
-        self._joints = tuple(joints)
-
-        # Parse actuators.
-        actuators = self._mjcf_root.find_all("actuator")
-        if not actuators:
-            raise ValueError("No actuators found in the MJCF model.")
-        self._actuators = tuple(actuators)
-
-        # Parse tendons.
-        tendons = self._mjcf_root.find_all("tendon")
-        if not tendons:
-            raise ValueError("No tendons found in the MJCF model.")
-        self._tendons = tuple(tendons)
+        self._joints = mjcf_utils.safe_find_all(self.mjcf_model, "joint")
+        self._actuators = mjcf_utils.safe_find_all(self.mjcf_model, "actuator")
+        self._tendons = mjcf_utils.safe_find_all(self.mjcf_model, "tendon")
 
         # Parse fingertip sites.
         fingertip_sites = []
