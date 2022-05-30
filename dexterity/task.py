@@ -192,16 +192,16 @@ class GoalTask(Task):
             return True
         return False
 
-    def get_discount(self, physics: mjcf.Physics) -> float:
-        # In the finite-horizon setting, on successful termination, we return 0.0 to
-        # indicate a terminal state. If the episode did not successfully terminate,
-        # i.e., the agent exceeded the time limit for a single solve, we return a
-        # discount of 1.0 to indicate that the agent should treat the episode as if it
-        # would have continued, even though the trajectory is truncated.
-        del physics  # Unused.
-        if self._successes >= self._successes_needed:
-            return 0.0
-        return 1.0
+    # def get_discount(self, physics: mjcf.Physics) -> float:
+    #     # In the finite-horizon setting, on successful termination, we return 0.0 to
+    #     # indicate a terminal state. If the episode did not successfully terminate,
+    #     # i.e., the agent exceeded the time limit for a single solve, we return a
+    #     # discount of 1.0 to indicate that the agent should treat the episode as if it
+    #     # would have continued, even though the trajectory is truncated.
+    #     del physics  # Unused.
+    #     if self._successes >= self._successes_needed:
+    #         return 0.0
+    #     return 1.0
 
     @property
     def task_observables(self) -> OrderedDict:

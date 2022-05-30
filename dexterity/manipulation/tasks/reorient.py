@@ -5,6 +5,7 @@ import dataclasses
 from typing import Dict, Optional
 
 import numpy as np
+from absl import logging
 from dm_control import composer
 from dm_control import mjcf
 from dm_control.composer import initializers
@@ -18,6 +19,7 @@ from dexterity import effector
 from dexterity import effectors
 from dexterity import goal
 from dexterity import task
+from dexterity.effectors import wrappers
 from dexterity.manipulation import props
 from dexterity.manipulation.goals import prop_orientation
 from dexterity.manipulation.shared import cameras
@@ -37,6 +39,10 @@ class Workspace:
     prop_bbox: workspaces.BoundingBox
 
 
+# Fraction of the full joint range to use when initializing the joints of the hand at
+# the start of every episode. Should be between 0 and 1.
+_INIT_JOINT_RANGE_FRACTION = 0.5
+
 # Alpha value of the visual goal hint.
 _HINT_ALPHA = 0.4
 # Position of the hint in the world frame, in meters.
@@ -47,12 +53,16 @@ _PROP_SIZE = 0.02
 
 # Fudge factor for taking the inverse of the orientation error, in radians.
 _ORIENTATION_EPS = 0.1
+
 # Threshold for successful orientation, in radians.
 _ORIENTATION_THRESHOLD = 0.1
+
 # Reward shaping coefficients.
+# TODO(kevin): Needs tuning.
 _ORIENTATION_WEIGHT = 1.0
 _SUCCESS_BONUS_WEIGHT = 800.0
-_ACTION_SMOOTHING_WEIGHT = -0.1  # NOTE(kevin): negative sign.
+_ACTION_SMOOTHING_WEIGHT = -0.0  # Turning this off for now.
+_FALL_PENALTY_WEIGHT = -100.0
 
 # Timestep of the physics simulation.
 _PHYSICS_TIMESTEP: float = 0.005
@@ -64,16 +74,17 @@ _CONTROL_TIMESTEP: float = 0.025
 _SUCCESSED_NEEDED: int = 1
 
 # The maximum allowed time for reaching the current target, in seconds.
-_MAX_STEPS_SINGLE_SOLVE: int = 300
+_MAX_STEPS_SINGLE_SOLVE: int = 400
 _MAX_TIME_SINGLE_SOLVE: float = _MAX_STEPS_SINGLE_SOLVE * _CONTROL_TIMESTEP
 
 _STEPS_BEFORE_MOVING_TARGET: int = 5
 
-_BBOX_SIZE = 0.05
+_BBOX_X = 0.07
+_BBOX_Y = 0.10
 _WORKSPACE = Workspace(
     prop_bbox=workspaces.BoundingBox(
-        lower=(-_BBOX_SIZE / 2, -0.13 - _BBOX_SIZE / 2, 0.16),
-        upper=(+_BBOX_SIZE / 2, -0.13 + _BBOX_SIZE / 2, 0.16),
+        lower=(-_BBOX_X / 2, -0.125 - _BBOX_Y / 2, 0.16),
+        upper=(+_BBOX_X / 2, -0.125 + _BBOX_Y / 2, 0.20),
     ),
 )
 
@@ -184,6 +195,12 @@ class ReOrient(task.GoalTask):
     ) -> None:
         super().initialize_episode(physics, random_state)
 
+        # Randomly initialize the joints of the hand.
+        qpos = self.hand.sample_collision_free_joint_angles(
+            physics, random_state, _INIT_JOINT_RANGE_FRACTION
+        )
+        self.hand.set_joint_angles(physics, qpos)
+
         self._hint_prop.set_pose(physics=physics, quaternion=self._goal)
         self._prop_placer(physics=physics, random_state=random_state)
 
@@ -209,25 +226,30 @@ class ReOrient(task.GoalTask):
                 self._failure_termination = True
 
     def should_terminate_episode(self, physics: mjcf.Physics) -> bool:
-        should_terminate = super().should_terminate_episode(physics)
-        return should_terminate or self._failure_termination
+        if self._failure_termination:
+            logging.info("Truncate episode due to prop falling.")
+            return True
+        return super().should_terminate_episode(physics)
 
     def get_reward(self, physics: mjcf.Physics) -> float:
+        del physics  # Unused.
         shaped_reward = _get_shaped_reorientation_reward(
-            physics,
-            self._goal_distance,
+            goal_distance=self._goal_distance,
+            action=self.hand_effector.previous_action,  # type: ignore
+            has_fallen=self._failure_termination,
         )
         return rewards.weighted_average(shaped_reward)
 
     def get_discount(self, physics: mjcf.Physics) -> float:
+        del physics  # Unused.
         if self._failure_termination:
-            return 1.0
-        return super().get_discount(physics)
+            return 0.0
+        return 1.0
 
     # Helper methods.
 
     def _is_prop_fallen(self, physics: mjcf.Physics) -> bool:
-        """Returns True if the prop has fallen from the hand."""
+        """Returns True if the prop has fallen and collided with the ground."""
         return mujoco_collisions.has_collision(
             physics=physics,
             collision_geom_prefix_1=[f"{self._prop.name}/"],
@@ -236,7 +258,9 @@ class ReOrient(task.GoalTask):
 
 
 def _get_shaped_reorientation_reward(
-    physics: mjcf.Physics, goal_distance: np.ndarray
+    goal_distance: np.ndarray,
+    action: np.ndarray,
+    has_fallen: bool,
 ) -> Dict[str, rewards.Reward]:
     """Returns a tuple of shaping reward components, as defined in [1].
 
@@ -274,11 +298,19 @@ def _get_shaped_reorientation_reward(
     )
 
     # Action smoothing component.
-    action_smoothing_reward = np.linalg.norm(physics.data.ctrl) ** 2
+    action_smoothing_reward = np.linalg.norm(action) ** 2
     assert isinstance(action_smoothing_reward, float)
     shaped_reward["action_smoothing"] = rewards.Reward(
         value=action_smoothing_reward,
         weight=_ACTION_SMOOTHING_WEIGHT,
+    )
+
+    # Fall penalty.
+    fall_penalty_reward = float(has_fallen)
+    assert isinstance(fall_penalty_reward, float)
+    shaped_reward["fall_penalty"] = rewards.Reward(
+        value=fall_penalty_reward,
+        weight=_FALL_PENALTY_WEIGHT,
     )
 
     return shaped_reward
@@ -335,6 +367,7 @@ def reorient_task(
     )
 
     hand_effector = effectors.HandEffector(hand=hand, hand_name=hand.name)
+    prev_action_effector = wrappers.PreviousAction(hand_effector)
 
     prop_obs_options = observations.make_options(
         observation_set.value, _FREEPROP_OBSERVABLES
@@ -357,7 +390,7 @@ def reorient_task(
     return ReOrient(
         arena=arena,
         hand=hand,
-        hand_effector=hand_effector,
+        hand_effector=prev_action_effector,
         prop=prop,
         hint_prop=hint_prop,
         goal_generator=goal_generator,
